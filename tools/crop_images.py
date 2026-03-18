@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""
-Resize and center-crop images to exactly 600x212 pixels.
-Outputs to `gfx/images/`.
+"""Crop scene source images for the C64 pipeline.
+
+Workflow stage 1:
+- Input: `gfx/originals/sceneNN.png`
+- Output: `gfx/images/sceneNN.png` (center-cropped 600x212)
 """
 
 import sys
@@ -52,7 +54,7 @@ def resize_and_center_crop(image_path: str, output_path: str) -> None:
 
 
 def main() -> None:
-    """Process all images in gfx/originals/."""
+    """Process scene images in `gfx/originals/` into `gfx/images/`."""
     workspace_root = Path(__file__).parent.parent
     originals_dir = workspace_root / "gfx" / "originals"
     images_dir = workspace_root / "gfx" / "images"
@@ -64,19 +66,13 @@ def main() -> None:
         print(f"Error: {originals_dir} does not exist", file=sys.stderr)
         sys.exit(1)
     
-    # Supported image extensions
-    extensions = {".png", ".jpg", ".jpeg", ".bmp", ".gif"}
-    
-    image_files = [
-        f for f in originals_dir.iterdir()
-        if f.suffix.lower() in extensions
-    ]
+    image_files = sorted(originals_dir.glob("scene*.png"))
     
     if not image_files:
-        print(f"No image files found in {originals_dir}")
+        print(f"No scene images found in {originals_dir} (expected: scene01.png, scene02.png, ...)")
         sys.exit(0)
     
-    print(f"Found {len(image_files)} image(s) to process\n")
+    print(f"Found {len(image_files)} scene image(s) to process\n")
     
     for image_file in sorted(image_files):
         try:

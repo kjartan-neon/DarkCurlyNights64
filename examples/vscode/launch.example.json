@@ -1,0 +1,70 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "VS64: Build + Run VICE (one-click)",
+      "configurations": [
+        "VS64: Debug in VICE (debug build)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "VS64: Build + Run VICE (release one-click)",
+      "configurations": [
+        "VS64: Debug in VICE (release build)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "VS64: Build + Run 6502 (release one-click)",
+      "configurations": [
+        "VS64: Debug in 6502 Emulator (release build)"
+      ],
+      "stopAll": true
+    }
+  ],
+  "configurations": [
+    {
+      "name": "VS64: Debug in VICE (debug build)",
+      "type": "vice",
+      "request": "launch",
+      "preLaunchTask": "Build: Debug",
+      "program": "${workspaceFolder}/build/${workspaceFolderBasename}.prg",
+      "hostname": "localhost",
+      "port": 6502,
+      "timeout": 10
+    },
+    {
+      "name": "VS64: Debug in 6502 Emulator (debug build)",
+      "type": "6502",
+      "request": "launch",
+      "preLaunchTask": "Build: Debug"
+    },
+    {
+      "name": "VS64: Debug in VICE (release build)",
+      "type": "vice",
+      "request": "launch",
+      "preLaunchTask": "Build: Release",
+      "program": "${workspaceFolder}/build/${workspaceFolderBasename}.prg",
+      "hostname": "localhost",
+      "port": 6502,
+      "timeout": 10
+    },
+    {
+      "name": "VS64: Debug in 6502 Emulator (release build)",
+      "type": "6502",
+      "request": "launch",
+      "preLaunchTask": "Build: Release"
+    },
+    {
+      "name": "VS64: Attach to running VICE",
+      "type": "vice",
+      "request": "attach",
+      "preLaunchTask": "Build: Debug",
+      "program": "${workspaceFolder}/build/${workspaceFolderBasename}.prg",
+      "hostname": "localhost",
+      "port": 6502,
+      "timeout": 10
+    }
+  ]
+}

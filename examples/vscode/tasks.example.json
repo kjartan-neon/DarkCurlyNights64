@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Mode: Debug",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-c",
+        "import json,pathlib; p=pathlib.Path(\"project-config.json\"); d=json.loads(p.read_text()); d[\"build\"]=\"debug\"; p.write_text(json.dumps(d, indent=4)+\"\\n\")"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Build Mode: Release",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "-c",
+        "import json,pathlib; p=pathlib.Path(\"project-config.json\"); d=json.loads(p.read_text()); d[\"build\"]=\"release\"; p.write_text(json.dumps(d, indent=4)+\"\\n\")"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      }
+    },
+    {
+      "label": "Build: Debug",
+      "type": "shell",
+      "command": "ninja",
+      "args": [
+        "-C",
+        "${workspaceFolder}/build"
+      ],
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build Mode: Debug"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Release",
+      "type": "shell",
+      "command": "ninja",
+      "args": [
+        "-C",
+        "${workspaceFolder}/build"
+      ],
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build Mode: Release"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Clean",
+      "type": "shell",
+      "command": "ninja",
+      "args": [
+        "-C",
+        "${workspaceFolder}/build",
+        "-t",
+        "clean"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: VICE",
+      "type": "shell",
+      "command": "/Applications/vice-arm64-gtk3-3.10/bin/x64sc",
+      "args": [
+        "${workspaceFolder}/build/${workspaceFolderBasename}.prg"
+      ],
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build: Debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+    "C_Cpp.codeAnalysis.clangTidy.path": "/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/bin/clang-tidy",
+    "vs64.emulator": "/Applications/vice-arm64-gtk3-3.10/VICE.app/Contents/MacOS/VICE",
+    "vice.emulator": "/Applications/vice-arm64-gtk3-3.10/VICE.app/Contents/MacOS/VICE",
+    "c64.emulator": "/Applications/vice-arm64-gtk3-3.10/VICE.app/Contents/MacOS/VICE"
+}
