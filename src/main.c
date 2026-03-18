@@ -6,6 +6,7 @@
 #include "generated_story.h"
 #include "scene01_bitmap.h"
 #include "scene02_bitmap.h"
+#include "scene03_bitmap.h"
 
 /*
  * This program runs a small interactive story on the Commodore 64.
@@ -31,6 +32,7 @@
 #define VIC_MEMORY_CONTROL (*(volatile uint8_t*)0xD018)
 #define VIC_BANK_SELECT    (*(volatile uint8_t*)0xDD00)
 #define CPU_PORT           (*(volatile uint8_t*)0x0001)
+#define KERNAL_LAST_DEVICE (*(volatile uint8_t*)0x00BA)
 
 #define SCREEN_W 40
 #define SCREEN_H 25
@@ -50,7 +52,6 @@
 #define BITMAP_TOTAL_BYTES 8000u
 #define FONT_BYTES 1024u
 
-#define BITMAP_ASSET_FILENAME "SCENE01.BMP"
 #define BITMAP_LOAD_ADDR ((void*)0xE000)
 
 /* Debug marker shown as border color + top-left character while booting. */
@@ -64,6 +65,7 @@ static volatile uint8_t debug_stage = 0;
 static void set_debug_marker(uint8_t stage, uint8_t border)
 {
     uint8_t screen_code = 31;
+    uint16_t i;
 
     debug_stage = stage;
     BORDER_COLOR = border;
@@ -74,6 +76,11 @@ static void set_debug_marker(uint8_t stage, uint8_t border)
 
     ((uint8_t*)0x0400)[0] = screen_code;
     ((uint8_t*)0xD800)[0] = COLOR_WHITE;
+
+    /* Short pause for boot-stage visibility in debug builds. */
+    for (i = 0; i < 1000; ++i) {
+        __asm__("nop");
+    }
 }
 
 /*
@@ -426,63 +433,122 @@ static void draw_top_fallback(void)
 }
 
 /*
- * Purpose: Load bitmap bytes for a scene from embedded header arrays.
- * Inputs: scene_id selecting which scene bitmap to display.
- * Returns: 1 on success.
+ * Purpose: Build SCENENN.BMP filename from a numeric scene id.
+ * Inputs: scene_id and output buffer (must hold at least 12 bytes).
+ * Returns: nothing.
  */
-static uint8_t load_bitmap_from_embedded(uint8_t scene_id)
+static void build_scene_filename(uint8_t scene_id, char* out_name)
 {
-    /* Pick the embedded bitmap array for the current scene and copy to VRAM. */
-    const uint8_t* bitmap_data = NULL;
-    uint16_t bitmap_size = 0;
-    
-    set_debug_marker('L', COLOR_ORANGE);
-    
-    /* Select bitmap based on scene ID */
-    if (scene_id == 1) {
-        bitmap_data = SCENE01_BITMAP_DATA;
-        bitmap_size = SCENE01_BITMAP_SIZE;
-    } else if (scene_id == 2) {
-        bitmap_data = SCENE02_BITMAP_DATA;
-        bitmap_size = SCENE02_BITMAP_SIZE;
-    } else {
-        /* Default to scene 1 if unknown */
-        bitmap_data = SCENE01_BITMAP_DATA;
-        bitmap_size = SCENE01_BITMAP_SIZE;
-    }
-    
-    set_debug_marker('T', COLOR_BROWN);
-    memcpy(BITMAP_RAM, bitmap_data, bitmap_size);
-    set_debug_marker('U', COLOR_RED);
-    set_debug_marker('R', COLOR_LIGHTGREEN);
-    set_debug_marker('S', COLOR_GREEN);
-    return 1;
+    out_name[0] = 'S';
+    out_name[1] = 'C';
+    out_name[2] = 'E';
+    out_name[3] = 'N';
+    out_name[4] = 'E';
+    out_name[5] = (char)('0' + ((scene_id / 10u) % 10u));
+    out_name[6] = (char)('0' + (scene_id % 10u));
+    out_name[7] = '.';
+    out_name[8] = 'B';
+    out_name[9] = 'M';
+    out_name[10] = 'P';
+    out_name[11] = '\0';
 }
 
-/* Disk loading disabled; using embedded bitmap instead.
-static uint8_t load_bitmap_from_disk(void)
+/*
+ * Purpose: Try loading one bitmap file from one specific device number.
+ * Inputs: filename (SCENENN.BMP) and device number.
+ * Returns: 1 on success, 0 on failure.
+ */
+static uint8_t try_load_bitmap_from_device(const char* filename, uint8_t device)
 {
     uint8_t status;
 
-    set_debug_marker('L', COLOR_ORANGE);
-    cbm_k_setlfs(1, 8, 0);
-    set_debug_marker('N', COLOR_BROWN);
-    cbm_k_setnam(BITMAP_ASSET_FILENAME);
-    set_debug_marker('D', COLOR_RED);
+    cbm_k_setlfs(1, device, 0);
+    cbm_k_setnam(filename);
     cbm_k_load(CBM_LOAD_RAM, BITMAP_LOAD_ADDR);
-    set_debug_marker('R', COLOR_LIGHTGREEN);
     status = cbm_k_readst();
     cbm_k_clall();
 
-    if (status == 0) {
-        set_debug_marker('S', COLOR_GREEN);
-    } else {
-        set_debug_marker('E', COLOR_LIGHTRED);
-    }
-
     return (uint8_t)(status == 0);
 }
-*/
+
+/*
+ * Purpose: Load bitmap bytes for a scene from disk into BITMAP_RAM.
+ * Inputs: scene_id selecting file name SCENENN.BMP.
+ * Returns: 1 on success, 0 on load failure.
+ */
+static uint8_t load_bitmap_from_disk(uint8_t scene_id)
+{
+    uint8_t i;
+    char bitmap_asset_filename[12];
+    uint8_t current_device = KERNAL_LAST_DEVICE;
+    uint8_t device_candidates[3];
+    uint8_t candidate_count = 0;
+
+    build_scene_filename(scene_id, bitmap_asset_filename);
+
+    /* Only probe known disk devices first; avoid tape/keyboard device stalls. */
+    if (current_device == 8 || current_device == 9) {
+        device_candidates[candidate_count++] = current_device;
+    }
+
+    if (current_device != 8) {
+        device_candidates[candidate_count++] = 8;
+    }
+
+    if (current_device != 9) {
+        device_candidates[candidate_count++] = 9;
+    }
+
+    set_debug_marker('L', COLOR_ORANGE);
+
+    for (i = 0; i < candidate_count; ++i) {
+        set_debug_marker('N', COLOR_BROWN);
+        if (try_load_bitmap_from_device(bitmap_asset_filename, device_candidates[i])) {
+            set_debug_marker('S', COLOR_GREEN);
+            return 1;
+        }
+    }
+
+    set_debug_marker('E', COLOR_LIGHTRED);
+    return 0;
+}
+
+/*
+ * Purpose: Load one of the first 3 scene bitmaps from embedded arrays.
+ * Inputs: scene_id.
+ * Returns: 1 on success, 0 if scene is not embedded.
+ */
+static uint8_t load_bitmap_from_embedded(uint8_t scene_id)
+{
+    switch (scene_id) {
+        case 1:
+            memcpy(BITMAP_RAM, SCENE01_BITMAP_DATA, SCENE01_BITMAP_SIZE);
+            return 1;
+        case 2:
+            memcpy(BITMAP_RAM, SCENE02_BITMAP_DATA, SCENE02_BITMAP_SIZE);
+            return 1;
+        case 3:
+            memcpy(BITMAP_RAM, SCENE03_BITMAP_DATA, SCENE03_BITMAP_SIZE);
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+/*
+ * Purpose: Load scene bitmap from embedded data (1-3) or disk (others).
+ * Inputs: scene_id.
+ * Returns: 1 on success, 0 on failure.
+ */
+static uint8_t load_bitmap_for_scene(uint8_t scene_id)
+{
+    if (load_bitmap_from_embedded(scene_id)) {
+        set_debug_marker('S', COLOR_GREEN);
+        return 1;
+    }
+
+    return load_bitmap_from_disk(scene_id);
+}
 
 /*
  * Purpose: Find array index in STORY_SCENES by scene ID.
@@ -491,7 +557,6 @@ static uint8_t load_bitmap_from_disk(void)
  */
 static uint8_t find_scene_index(uint8_t scene_id)
 {
-    /* Convert scene ID (story data) to array index in STORY_SCENES. */
     uint8_t i;
     for (i = 0; i < STORY_SCENE_COUNT; ++i) {
         if (STORY_SCENES[i].id == scene_id) {
@@ -508,10 +573,6 @@ static uint8_t find_scene_index(uint8_t scene_id)
  */
 static uint8_t resolve_target(const StoryOption* option, uint8_t flags)
 {
-    /*
-     * Some options branch differently depending on collected flags/items.
-     * If condition is unmet and alternate target exists, use alternate scene.
-     */
     if (option->condition == STORY_COND_HAS_MULTITOOL && !(flags & STORY_FLAG_MULTITOOL) && option->alt_target_scene != 255) {
         return option->alt_target_scene;
     }
@@ -528,7 +589,6 @@ static uint8_t resolve_target(const StoryOption* option, uint8_t flags)
  */
 static void clear_description_area(void)
 {
-    /* Clear only the text-description rows, preserving top bitmap art. */
     uint8_t row;
     for (row = DESC_ROW_START; row < (uint8_t)(DESC_ROW_START + DESC_ROWS); ++row) {
         clear_line(row, COLOR_WHITE);
@@ -549,8 +609,10 @@ static void draw_scene(const StoryScene* scene, uint16_t page_start, uint8_t pag
         clear_line(row, COLOR_WHITE);
     }
 
-    /* Load the correct bitmap for this scene */
-    load_bitmap_from_embedded(scene->id);
+    /* Load the correct bitmap for this scene. */
+    if (!load_bitmap_for_scene(scene->id)) {
+        write_text(0, 0, "BITMAP LOAD FAILED", COLOR_LIGHTRED);
+    }
 
     clear_description_area();
 
@@ -603,23 +665,24 @@ int main(void)
     cbm_k_clrch();
     set_debug_marker('A', COLOR_BLACK);
 
-    /*
-     * Disable interrupts while copying font from ROM.
+    /* Disable interrupts while copying font from ROM.
      * Then initialize bitmap memory and switch VIC-II mode.
      */
     __asm__("sei");
     copy_font_from_rom();
     __asm__("cli");
     set_debug_marker('B', COLOR_BLUE);
+    configure_bitmap_mode();
+    set_debug_marker('M', COLOR_PURPLE);
     clear_bitmap();
     set_debug_marker('C', COLOR_CYAN);
     initialize_bitmap_colors();
     set_debug_marker('I', COLOR_LIGHTBLUE);
-    configure_bitmap_mode();
-    set_debug_marker('M', COLOR_PURPLE);
 
-    /* Load initial bitmap (scene 1) */
-    load_bitmap_from_embedded(1);
+    /* Load initial bitmap (scene 1). */
+    if (!load_bitmap_for_scene(1)) {
+        draw_top_fallback();
+    }
     set_debug_marker('G', COLOR_GREEN);
 
     apply_monochrome_palette();
