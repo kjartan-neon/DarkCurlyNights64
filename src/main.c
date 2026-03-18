@@ -6,7 +6,6 @@
 #include "generated_story.h"
 #include "scene01_bitmap.h"
 #include "scene02_bitmap.h"
-#include "scene03_bitmap.h"
 
 /*
  * This program runs a small interactive story on the Commodore 64.
@@ -53,9 +52,14 @@
 #define FONT_BYTES 1024u
 
 #define BITMAP_LOAD_ADDR ((void*)0xE000)
+#define SCENE_PACK_FILENAME "SCENES.BIN"
 
 /* Debug marker shown as border color + top-left character while booting. */
 static volatile uint8_t debug_stage = 0;
+
+/* Forward declaration for debug logging helper used before write_text definition. */
+static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color);
+static void debug_write_line(uint8_t col, uint8_t row, const char* text, uint8_t color);
 
 /*
  * Purpose: Show a one-letter boot/debug stage on screen and border.
@@ -81,6 +85,34 @@ static void set_debug_marker(uint8_t stage, uint8_t border)
     for (i = 0; i < 1000; ++i) {
         __asm__("nop");
     }
+}
+
+/*
+ * Purpose: Slow down boot-time disk debug output for readability.
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void debug_delay_2s(void)
+{
+    volatile uint16_t outer;
+    volatile uint16_t inner;
+
+    for (outer = 0; outer < 8u; ++outer) {
+        for (inner = 0; inner < 2000u; ++inner) {
+            __asm__("nop");
+        }
+    }
+}
+
+/*
+ * Purpose: Write one disk-debug line and pause so it can be read.
+ * Inputs: col, row, text, color.
+ * Returns: nothing.
+ */
+static void debug_write_line(uint8_t col, uint8_t row, const char* text, uint8_t color)
+{
+    write_text(row, col, text, color);
+    debug_delay_2s();
 }
 
 /*
@@ -480,24 +512,10 @@ static uint8_t load_bitmap_from_disk(uint8_t scene_id)
 {
     uint8_t i;
     char bitmap_asset_filename[12];
-    uint8_t current_device = KERNAL_LAST_DEVICE;
-    uint8_t device_candidates[3];
-    uint8_t candidate_count = 0;
+    uint8_t device_candidates[4] = {8, 9, 10, 11};
+    uint8_t candidate_count = 4;
 
     build_scene_filename(scene_id, bitmap_asset_filename);
-
-    /* Only probe known disk devices first; avoid tape/keyboard device stalls. */
-    if (current_device == 8 || current_device == 9) {
-        device_candidates[candidate_count++] = current_device;
-    }
-
-    if (current_device != 8) {
-        device_candidates[candidate_count++] = 8;
-    }
-
-    if (current_device != 9) {
-        device_candidates[candidate_count++] = 9;
-    }
 
     set_debug_marker('L', COLOR_ORANGE);
 
@@ -514,7 +532,207 @@ static uint8_t load_bitmap_from_disk(uint8_t scene_id)
 }
 
 /*
- * Purpose: Load one of the first 3 scene bitmaps from embedded arrays.
+ * Purpose: Open packed scene file SCENES.BIN for reading on one device.
+ * Inputs: device number.
+ * Returns: 1 on success, 0 on failure.
+ */
+static uint8_t open_scene_pack_for_device(uint8_t device)
+{
+    cbm_k_setlfs(2, device, 2);
+    cbm_k_setnam(SCENE_PACK_FILENAME);
+    cbm_k_open();
+    if (cbm_k_readst() != 0) {
+        set_debug_marker('1', COLOR_RED);
+        cbm_k_clall();
+        return 0;
+    }
+
+    cbm_k_chkin(2);
+    if (cbm_k_readst() != 0) {
+        set_debug_marker('2', COLOR_ORANGE);
+        cbm_k_close(2);
+        cbm_k_clall();
+        return 0;
+    }
+
+    set_debug_marker('3', COLOR_YELLOW);
+    return 1;
+}
+
+/*
+ * Purpose: Close packed scene file logical channel.
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void close_scene_pack(void)
+{
+    cbm_k_clrch();
+    cbm_k_close(2);
+    cbm_k_clall();
+}
+
+/*
+ * Purpose: Read one byte from active pack channel.
+ * Inputs: out_byte pointer.
+ * Returns: 1 on success, 0 on read error.
+ */
+static uint8_t read_pack_byte(uint8_t* out_byte)
+{
+    *out_byte = cbm_k_chrin();
+    return (uint8_t)((cbm_k_readst() & 0x80u) == 0);
+}
+
+/*
+ * Purpose: Read and validate SCN1 pack header, allowing optional PRG load bytes.
+ * Inputs: out_scene_count pointer.
+ * Returns: 1 on valid header, 0 on failure.
+ */
+static uint8_t read_pack_header(uint8_t* out_scene_count)
+{
+    uint8_t byte_value;
+    uint8_t sig_index = 0;
+    uint8_t scanned = 0;
+
+    while (scanned < 32u) {
+        if (!read_pack_byte(&byte_value)) {
+            return 0;
+        }
+        ++scanned;
+
+        if (sig_index == 0) {
+            sig_index = (uint8_t)(byte_value == 'S');
+        } else if (sig_index == 1) {
+            if (byte_value == 'C') {
+                sig_index = 2;
+            } else {
+                sig_index = (uint8_t)(byte_value == 'S');
+            }
+        } else if (sig_index == 2) {
+            if (byte_value == 'N') {
+                sig_index = 3;
+            } else {
+                sig_index = (uint8_t)(byte_value == 'S');
+            }
+        } else {
+            if (byte_value == '1') {
+                sig_index = 4;
+                break;
+            }
+            sig_index = (uint8_t)(byte_value == 'S');
+        }
+    }
+
+    if (sig_index != 4) {
+        return 0;
+    }
+
+    if (!read_pack_byte(out_scene_count)) {
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * Purpose: Load one scene from SCENES.BIN on one specific device.
+ * Inputs: scene_id, device.
+ * Returns: 1 on success, 0 on failure.
+ */
+static uint8_t load_bitmap_from_pack_device(uint8_t scene_id, uint8_t device)
+{
+    uint8_t i;
+    uint8_t scene_count;
+    uint8_t byte_value;
+    uint8_t found = 0;
+    uint16_t target_size = 0;
+    uint32_t target_offset = 0;
+    uint32_t skip_count;
+    uint16_t data_index;
+
+    if (!open_scene_pack_for_device(device)) {
+        return 0;
+    }
+
+    if (!read_pack_header(&scene_count)) { set_debug_marker('4', COLOR_RED); close_scene_pack(); return 0; }
+    set_debug_marker('9', COLOR_CYAN);
+
+    for (i = 0; i < scene_count; ++i) {
+        uint8_t entry_scene_id;
+        uint8_t off_lo;
+        uint8_t off_mid;
+        uint8_t off_hi;
+        uint8_t size_lo;
+        uint8_t size_hi;
+
+        if (!read_pack_byte(&entry_scene_id)) { close_scene_pack(); return 0; }
+        if (!read_pack_byte(&off_lo)) { close_scene_pack(); return 0; }
+        if (!read_pack_byte(&off_mid)) { close_scene_pack(); return 0; }
+        if (!read_pack_byte(&off_hi)) { close_scene_pack(); return 0; }
+        if (!read_pack_byte(&size_lo)) { close_scene_pack(); return 0; }
+        if (!read_pack_byte(&size_hi)) { close_scene_pack(); return 0; }
+
+        if (entry_scene_id == scene_id) {
+            found = 1;
+            target_offset = ((uint32_t)off_hi << 16) | ((uint32_t)off_mid << 8) | (uint32_t)off_lo;
+            target_size = (uint16_t)(((uint16_t)size_hi << 8) | (uint16_t)size_lo);
+        }
+    }
+
+    if (!found || target_size == 0 || target_size > BITMAP_TOTAL_BYTES) {
+        set_debug_marker('A', COLOR_RED);
+        close_scene_pack();
+        return 0;
+    }
+    set_debug_marker('B', COLOR_LIGHTBLUE);
+
+    set_debug_marker('C', COLOR_PURPLE);
+    for (skip_count = 0; skip_count < target_offset; ++skip_count) {
+        if (!read_pack_byte(&byte_value)) {
+            set_debug_marker('D', COLOR_RED);
+            close_scene_pack();
+            return 0;
+        }
+    }
+
+    set_debug_marker('E', COLOR_GREEN);
+    clear_bitmap();
+    for (data_index = 0; data_index < target_size; ++data_index) {
+        if (!read_pack_byte(&BITMAP_RAM[data_index])) {
+            set_debug_marker('F', COLOR_RED);
+            close_scene_pack();
+            return 0;
+        }
+    }
+    set_debug_marker('G', COLOR_GREEN);
+
+    close_scene_pack();
+    set_debug_marker('H', COLOR_GREEN);
+    return 1;
+}
+
+/*
+ * Purpose: Load scene from packed SCENES.BIN trying common disk devices.
+ * Inputs: scene_id.
+ * Returns: 1 on success, 0 on failure.
+ */
+static uint8_t load_bitmap_from_pack(uint8_t scene_id)
+{
+    uint8_t i;
+    uint8_t device_candidates[4] = {8, 9, 10, 11};
+    uint8_t candidate_count = 4;
+
+    for (i = 0; i < candidate_count; ++i) {
+        if (load_bitmap_from_pack_device(scene_id, device_candidates[i])) {
+            set_debug_marker('P', COLOR_GREEN);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+/*
+ * Purpose: Load one of the first 2 scene bitmaps from embedded arrays.
  * Inputs: scene_id.
  * Returns: 1 on success, 0 if scene is not embedded.
  */
@@ -527,12 +745,97 @@ static uint8_t load_bitmap_from_embedded(uint8_t scene_id)
         case 2:
             memcpy(BITMAP_RAM, SCENE02_BITMAP_DATA, SCENE02_BITMAP_SIZE);
             return 1;
-        case 3:
-            memcpy(BITMAP_RAM, SCENE03_BITMAP_DATA, SCENE03_BITMAP_SIZE);
-            return 1;
         default:
             return 0;
     }
+}
+
+/*
+ * Purpose: Boot-time validation: attempt to open SCENES.BIN to confirm disk access.
+ * Inputs: none.
+ * Returns: 1 if pack is accessible, 0 otherwise.
+ */
+static uint8_t validate_pack_accessible(void)
+{
+    uint8_t device_candidates[4];
+    uint8_t candidate_count = 4;
+    uint8_t i;
+    uint8_t base_row;
+    uint8_t scene_count;
+    uint8_t status;
+
+    /* Probe all common IEC device numbers used by VICE/C64 drives. */
+    device_candidates[0] = 8;
+    device_candidates[1] = 9;
+    device_candidates[2] = 10;
+    device_candidates[3] = 11;
+
+    set_debug_marker('V', COLOR_CYAN);
+    debug_write_line(1, 2, "DISK VALIDATION START", COLOR_LIGHTGREEN);
+
+    for (i = 0; i < candidate_count; ++i) {
+        base_row = (uint8_t)(2 + (i * 4));
+        cbm_k_clall();
+
+        switch (device_candidates[i]) {
+            case 8:
+                debug_write_line(1, (uint8_t)(base_row + 1), "TRY DEVICE 8         ", COLOR_YELLOW);
+                break;
+            case 9:
+                debug_write_line(1, (uint8_t)(base_row + 1), "TRY DEVICE 9         ", COLOR_YELLOW);
+                break;
+            case 10:
+                debug_write_line(1, (uint8_t)(base_row + 1), "TRY DEVICE 10        ", COLOR_YELLOW);
+                break;
+            default:
+                debug_write_line(1, (uint8_t)(base_row + 1), "TRY DEVICE 11        ", COLOR_YELLOW);
+                break;
+        }
+
+        cbm_k_setlfs(2, device_candidates[i], 2);
+        set_debug_marker('1', COLOR_LIGHTBLUE);
+        cbm_k_setnam(SCENE_PACK_FILENAME);
+        cbm_k_open();
+        status = cbm_k_readst();
+
+        if (status != 0) {
+            debug_write_line(1, (uint8_t)(base_row + 2), "OPEN FAIL            ", COLOR_LIGHTRED);
+            continue;
+        }
+        debug_write_line(1, (uint8_t)(base_row + 2), "OPEN OK              ", COLOR_GREEN);
+        set_debug_marker('2', COLOR_LIGHTBLUE);
+
+        cbm_k_chkin(2);
+        status = cbm_k_readst();
+        if (status != 0) {
+            debug_write_line(1, (uint8_t)(base_row + 3), "CHKIN FAIL           ", COLOR_LIGHTRED);
+            cbm_k_close(2);
+            cbm_k_clall();
+            continue;
+        }
+        debug_write_line(1, (uint8_t)(base_row + 3), "CHKIN OK             ", COLOR_GREEN);
+        set_debug_marker('3', COLOR_LIGHTBLUE);
+
+        if (!read_pack_header(&scene_count)) {
+            cbm_k_clrch();
+            cbm_k_close(2);
+            cbm_k_clall();
+            debug_write_line(1, (uint8_t)(base_row + 4), "HEADER FAIL          ", COLOR_LIGHTRED);
+            continue;
+        }
+
+        cbm_k_clrch();
+        cbm_k_close(2);
+        cbm_k_clall();
+        debug_write_line(1, (uint8_t)(base_row + 4), "HEADER OK            ", COLOR_GREEN);
+        debug_write_line(1, 19, "PACK FOUND           ", COLOR_GREEN);
+        set_debug_marker('W', COLOR_GREEN);
+        return 1;
+    }
+
+    debug_write_line(1, 19, "PACK NOT FOUND       ", COLOR_LIGHTRED);
+    set_debug_marker('Z', COLOR_RED);
+    return 0;
 }
 
 /*
@@ -544,6 +847,10 @@ static uint8_t load_bitmap_for_scene(uint8_t scene_id)
 {
     if (load_bitmap_from_embedded(scene_id)) {
         set_debug_marker('S', COLOR_GREEN);
+        return 1;
+    }
+
+    if (load_bitmap_from_pack(scene_id)) {
         return 1;
     }
 
@@ -687,6 +994,14 @@ int main(void)
 
     apply_monochrome_palette();
     set_debug_marker('P', COLOR_WHITE);
+
+    /* Boot-time disk validation: confirm SCENES.BIN is accessible. */
+    if (!validate_pack_accessible()) {
+        write_text(0, 0, "DISK ACCESS FAILED", COLOR_LIGHTRED);
+        set_debug_marker('T', COLOR_RED);
+        return 1;
+    }
+    set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */
     for (;;) {

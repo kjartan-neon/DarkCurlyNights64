@@ -48,7 +48,40 @@ Generated files:
 - `gfx/images/sceneNN.png` (cropped 600x212)
 - `gfx/c64/sceneNN_c64.png` (temporary 1-bit 320x100 C64 image)
 - `SCENENN.BMP` and `build/SCENENN.BMP`
+- `SCENES.BIN` and `build/SCENES.BIN` (single packed bitmap file)
 - `src/sceneNN_bitmap.h`
+
+At runtime, scene image loading order is:
+
+1. Embedded bitmap (scenes 1-3)
+2. Packed file `SCENES.BIN`
+3. Legacy per-scene file `SCENENN.BMP` fallback
+
+## Disk image workflow (VICE)
+
+If you launch only a standalone `.prg`, file loading may fail depending on VICE drive setup.
+Using a disk image is the most reliable workflow.
+
+Build packed assets + program + disk image:
+
+```zsh
+cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
+./tools/rebuild_images.sh
+ninja -C build
+./tools/build_disk_image.sh --type d81 --output build/DarkCurlyNights64.d81
+```
+
+Run in VICE from disk image:
+
+```zsh
+/Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64/build/DarkCurlyNights64.d81
+```
+
+### Why `d81` and not `d64`?
+
+- `SCENES.BIN` + program is currently larger than practical `d64` payload.
+- `d81` has enough capacity for the full packed story assets.
+- `tools/build_disk_image.sh --type d64` fails with a clear size error if content is too large.
 
 ## Build
 
