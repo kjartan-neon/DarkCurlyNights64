@@ -27,7 +27,7 @@ You stumble into a corridor. The structure groans under immense pressure. Throug
  * Option B: Look for another route. (There is none. Go back to A.)
 SCENE 5: CONFIRMED IDENTITY
 Description:
-IDENTITY CONFIRMED: SUBJECT L-73. The screen flashes. A compressed audio log plays: "The Middle East exchange... the thermal bloom... the Gulf Stream has collapsed. We are activating AETHELRED. Welcome to the new Ice Age, L-73. Report to the Core."
+IDENTITY CONFIRMED: SUBJECT K-81. The screen flashes. A compressed audio log plays: "The Middle East exchange... the thermal bloom... the Gulf Stream has collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to the Core."
  * Option A: Take the service elevator up. (Go to SCENE 7)
  * Option B: Try to access other crew logs first. (ACCESS DENIED. Go to A.)
 SCENE 6: MECHANICAL FAILURE
@@ -52,7 +52,7 @@ You find a locker. Inside is a grey jumpsuit. The patch reads: AETHELRED CORE - 
 SCENE 10: FIRST CONTACT
 Description:
 You step into the corridor. A figure in a bulkier blue jumpsuit approaches. It's a woman, her face tense. She holds a plasma welder defensively. "Identify! Leader Class or Worker Class?"
- * Option A: "I am L-73, Leader Class. Just awakened." (Go to SCENE 11)
+ * Option A: "I am K-81, Leader Class. Just awakened." (Go to SCENE 11)
  * Option B: "Who are you?" (Go to SCENE 11)
 SCENE 11: ELARA
 Description:
@@ -91,11 +91,11 @@ You use your multi-tool to bypass a faulty relay. Elara looks up, surprised by y
 SCENE 18: CHILLY OBSERVATION
 Description:
 You stand back. Elara works with efficient, practiced movements. The core stabilizes. She looks at you, her expression again guarded. You are just another Leader.
- * Option A: Continue to SCENE 19.
+ * Option A: Help Elara (GO to SCENE 19)
 SCENE 19: ASSIGNMENT
 Description:
 Your awakening is logged. The AI Core flashes your duties.
-L-73 ASSIGNMENT: OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.
+K-81 ASSIGNMENT: OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.
  * Option A: Accept assignment. (Go to SCENE 20)
 SCENE 20: SHARED SECTOR
 Description:
@@ -109,7 +109,7 @@ During your scarce downtime, you meet her on the Observation Deck. She talks abo
  * Option B: Ask her if she resents you. (Go to SCENE 23)
 SCENE 22: COFFEE AND COMPLICITY
 Description:
-The aroma of real coffee fills the sterile deck. Her eyes widen. "This... this is contraband, L-73." She laughs, a rare, beautiful sound. You drink the bitter brew together.
+The aroma of real coffee fills the sterile deck. Her eyes widen. "This... this is contraband, K-81." She laughs, a rare, beautiful sound. You drink the bitter brew together.
  * Option A: Hold her hand. (Go to SCENE 24)
  * Option B: Tell her she's beautiful. (Go to SCENE 24)
 SCENE 23: RESENTMENT
@@ -118,8 +118,8 @@ Description:
  * Option A: Apologize and change the subject. (Go to SCENE 24)
 SCENE 24: THE KISS
 Description:
-The proximity and the crushing loneliness merge. You look at her, and she is the only other human that matters. Your lips meet. It is desperate and electric.
- * Option A: Embrace the forbidden romance. (Go to SCENE 25)
+The proximity. You look at her, and she is the only other human that matters. Your lips meet. It feels forbidden, it is felectric.
+ * Option A: Embrace the love (Go to SCENE 25)
 SCENE 25: THE HIDDEN SEASON
 Description:
 Months pass. Your romance remains hidden. You meet in maintenance tunnels and the shadows of the fusion core. The complex runs at peak efficiency.
@@ -136,7 +136,7 @@ The code is correct. The fusion reactor stabilizes at 100%. A notification flash
  * Option A: Seek out Elara immediately. (Go to SCENE 28)
 SCENE 28: IMPOSSIBLE CHOICES
 Description:
-You find Elara in the hidden tunnel. "When you wake up, I’ll be 32, L-73. And you... you’ll still be you. My whole youth will happen while you sleep."
+You find Elara in the hidden tunnel. "When you wake up, I’ll be 32, K-81. And you... you’ll still be you. My whole youth will happen while you sleep."
  * Option A: "I will sabotage my pod. I will stay awake with you." (Go to SCENE 29)
  * Option B: "The Station AI won't allow it." (Go to SCENE 29)
 SCENE 29: SABOTAGE (A CHANCE?)

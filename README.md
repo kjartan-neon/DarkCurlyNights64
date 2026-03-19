@@ -1,5 +1,19 @@
 # DarkCurlyNights64
 
+## Teaser
+
+Wake into freezing gel, cracked glass, and an alarm-lit stasis pod at the bottom of a dead world.
+The Gulf Stream is gone. Civilization is ice. Deep under the North Sea, the AETHELRED platform keeps humanity alive on strict class rules, old machines, and impossible choices.
+
+In this retro interactive cyberpunk drama, you play K-81: a "Leader Class" sleeper awakened for one year of duty before returning to deep freeze. But survival is not the hardest part. Trust, memory, and forbidden love may cost more than the cold ever could.
+
+## Story Summary
+
+`DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 narrative.
+You begin disoriented in a malfunctioning pod, uncover the truth of a post-collapse ice age, and navigate a rigid social order between waking elites and workers who never sleep.
+As you work to stabilize the station and complete memory/code checks, your relationship with Elara, a maintenance worker, turns personal and dangerous.
+The story builds toward a countdown to stasis and a final choice between duty, rebellion, and the little time two people can steal from a frozen future.
+
 C64 interactive story prototype built with VS64 + llvm-mos.
 
 This repository includes a ready-to-run disk image at:
