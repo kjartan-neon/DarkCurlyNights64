@@ -51,7 +51,6 @@
 #define FONT_BYTES 1024u
 
 #define BITMAP_LOAD_ADDR ((void*)0xE000)
-#define SCENE_PACK_FILENAME "00"
 
 /* Debug marker shown as border color + top-left character while booting. */
 static volatile uint8_t debug_stage = 0;
@@ -437,313 +436,42 @@ static void draw_top_fallback(void)
 }
 
 /*
- * Purpose: Open compressed scene pack file on one device for reading.
- * Inputs: device number.
- * Returns: 1 on success, 0 on failure.
- */
-static uint8_t open_scene_pack_for_device(uint8_t device)
-{
-    cbm_k_setlfs(2, device, 0);
-    cbm_k_setnam(SCENE_PACK_FILENAME);
-    cbm_k_open();
-    if ((cbm_k_readst() & 0x3Fu) != 0) {
-        cbm_k_clall();
-        return 0;
-    }
-
-    cbm_k_chkin(2);
-    if ((cbm_k_readst() & 0x3Fu) != 0) {
-        cbm_k_close(2);
-        cbm_k_clall();
-        return 0;
-    }
-
-    return 1;
-}
-
-/*
- * Purpose: Close compressed scene pack channel.
- * Inputs: none.
- * Returns: nothing.
- */
-static void close_scene_pack(void)
-{
-    cbm_k_clrch();
-    cbm_k_close(2);
-    cbm_k_clall();
-}
-
-/* Buffer for faster disk reads (256 bytes). */
-#define PACK_BUFFER_SIZE 256
-static uint8_t pack_buffer[PACK_BUFFER_SIZE];
-static uint16_t pack_buffer_pos = 0;
-static uint16_t pack_buffer_len = 0;
-
-/*
- * Purpose: Refill the read buffer from disk.
- * Inputs: none.
- * Returns: 1 if bytes were read, 0 on EOF or error.
- */
-static uint8_t refill_pack_buffer(void)
-{
-    uint16_t i;
-    uint8_t byte_val;
-    uint8_t status;
-
-    pack_buffer_pos = 0;
-    pack_buffer_len = 0;
-
-    for (i = 0; i < PACK_BUFFER_SIZE; ++i) {
-        byte_val = cbm_k_chrin();
-        status = cbm_k_readst();
-        if ((status & 0x3Fu) != 0) {
-            /* EOF or error; store what we got and stop. */
-            break;
-        }
-        pack_buffer[i] = byte_val;
-        pack_buffer_len = (uint16_t)(i + 1);
-    }
-
-    return (uint8_t)(pack_buffer_len > 0);
-}
-
-/*
- * Purpose: Read one byte from buffered pack data.
- * Inputs: out_byte pointer.
- * Returns: 1 on success, 0 on EOF or error.
- */
-static uint8_t read_pack_byte_buffered(uint8_t* out_byte)
-{
-    if (pack_buffer_pos >= pack_buffer_len) {
-        if (!refill_pack_buffer()) {
-            return 0;
-        }
-    }
-
-    *out_byte = pack_buffer[pack_buffer_pos];
-    pack_buffer_pos = (uint16_t)(pack_buffer_pos + 1);
-    return 1;
-}
-
-static uint8_t read_pack_u16(uint16_t* out_value)
-{
-    uint8_t lo;
-    uint8_t hi;
-
-    if (!read_pack_byte_buffered(&lo) || !read_pack_byte_buffered(&hi)) {
-        return 0;
-    }
-    *out_value = (uint16_t)(lo | ((uint16_t)hi << 8));
-    return 1;
-}
-
-static uint8_t read_pack_u32(uint32_t* out_value)
-{
-    uint8_t b0;
-    uint8_t b1;
-    uint8_t b2;
-    uint8_t b3;
-
-    if (!read_pack_byte_buffered(&b0) || !read_pack_byte_buffered(&b1) || !read_pack_byte_buffered(&b2) || !read_pack_byte_buffered(&b3)) {
-        return 0;
-    }
-    *out_value = (uint32_t)b0;
-    *out_value |= ((uint32_t)b1 << 8);
-    *out_value |= ((uint32_t)b2 << 16);
-    *out_value |= ((uint32_t)b3 << 24);
-    return 1;
-}
-
-/*
- * Purpose: Read and validate pack header (RPK1 compressed or RAW1 top-half raw).
- * Inputs: out_scene_count pointer and out_is_raw_mode pointer.
- * Returns: 1 on valid header, 0 on failure.
- */
-static uint8_t read_pack_header(uint8_t* out_scene_count, uint8_t* out_is_raw_mode)
-{
-    uint8_t ignored;
-    uint8_t magic[4];
-    uint8_t i;
-
-    if (!read_pack_byte_buffered(&ignored) || !read_pack_byte_buffered(&ignored)) {
-        return 0;
-    }
-
-    for (i = 0; i < 4u; ++i) {
-        if (!read_pack_byte_buffered(&magic[i])) {
-            return 0;
-        }
-    }
-
-    if (magic[0] == 'R' && magic[1] == 'P' && magic[2] == 'K' && magic[3] == '1') {
-        *out_is_raw_mode = 0;
-    } else if (magic[0] == 'R' && magic[1] == 'A' && magic[2] == 'W' && magic[3] == '1') {
-        *out_is_raw_mode = 1;
-    } else {
-        return 0;
-    }
-
-    return read_pack_byte_buffered(out_scene_count);
-}
-
-/*
- * Purpose: Load one scene from compressed pack on one specific device.
+ * Purpose: Load one scene file (01..30) on one specific device.
  * Inputs: scene_id, device.
  * Returns: 1 on success, 0 on failure.
  */
-static uint8_t load_bitmap_from_pack_device(uint8_t scene_id, uint8_t device)
+static uint8_t load_scene_file_for_device(uint8_t scene_id, uint8_t device)
 {
-    uint8_t i;
-    uint8_t scene_count;
-    uint8_t is_raw_mode = 0;
-    uint8_t token;
-    uint8_t byte_value;
-    uint32_t scene_offset = 0;
-    uint16_t packed_size = 0;
-    uint16_t raw_size = 0;
-    uint16_t packed_consumed = 0;
-    uint16_t written = 0;
+    char filename[3] = {'0', '1', '\0'};
+    uint8_t status;
 
-    if (!open_scene_pack_for_device(device)) {
+    if (scene_id == 0u || scene_id > 30u) {
         return 0;
     }
 
-    /* Initialize read buffer. */
-    pack_buffer_pos = 0;
-    pack_buffer_len = 0;
+    filename[0] = (char)('0' + (scene_id / 10u));
+    filename[1] = (char)('0' + (scene_id % 10u));
 
-    if (!read_pack_header(&scene_count, &is_raw_mode)) {
-        close_scene_pack();
-        return 0;
-    }
-    if (scene_id == 0u || scene_id > scene_count) {
-        close_scene_pack();
-        return 0;
-    }
+    cbm_k_setlfs(2, device, 0);
+    cbm_k_setnam(filename);
+    cbm_k_load(0, BITMAP_LOAD_ADDR);
+    status = cbm_k_readst();
+    cbm_k_clall();
 
-    for (i = 1; i <= scene_count; ++i) {
-        uint32_t entry_offset;
-        uint16_t entry_packed;
-        uint16_t entry_raw;
-
-        if (!read_pack_u32(&entry_offset) || !read_pack_u16(&entry_packed) || !read_pack_u16(&entry_raw)) {
-            close_scene_pack();
-            return 0;
-        }
-
-        if (i == scene_id) {
-            scene_offset = entry_offset;
-            packed_size = entry_packed;
-            raw_size = entry_raw;
-        }
-    }
-
-    if (packed_size == 0u) {
-        close_scene_pack();
+    if ((status & 0x3Fu) != 0) {
         return 0;
     }
 
-    if (is_raw_mode) {
-        if (raw_size != BITMAP_TOP_HALF_BYTES || packed_size != BITMAP_TOP_HALF_BYTES) {
-            close_scene_pack();
-            return 0;
-        }
-    } else {
-        if (raw_size != BITMAP_TOTAL_BYTES) {
-            close_scene_pack();
-            return 0;
-        }
-    }
-
-    while (scene_offset > 0u) {
-        if (!read_pack_byte_buffered(&byte_value)) {
-            close_scene_pack();
-            return 0;
-        }
-        --scene_offset;
-    }
-
-    if (is_raw_mode) {
-        /*
-         * Stream directly to BITMAP_RAM with zero intermediate copies:
-         * 1. Clear the bottom half now so text rows are clean while image arrives.
-         * 2. Drain whatever bytes remain in the read-ahead buffer first.
-         * 3. Then read cbm_k_chrin() straight into BITMAP_RAM — no memcpy.
-         */
-        uint8_t status;
-
-        memset(&BITMAP_RAM[BITMAP_TOP_HALF_BYTES], 0x00, BITMAP_TOP_HALF_BYTES);
-
-        /* Step 1: flush buffered bytes directly into BITMAP_RAM. */
-        while (pack_buffer_pos < pack_buffer_len && written < raw_size) {
-            BITMAP_RAM[written++] = pack_buffer[pack_buffer_pos++];
-        }
-
-        /* Step 2: read remaining bytes from disk straight into BITMAP_RAM. */
-        while (written < raw_size) {
-            BITMAP_RAM[written] = cbm_k_chrin();
-            status = cbm_k_readst();
-            if ((status & 0x3Fu) != 0) {
-                close_scene_pack();
-                return 0;
-            }
-            ++written;
-        }
-
-        close_scene_pack();
-        return (uint8_t)(written == raw_size);
-    }
-
-    /* Draw new image directly on top of the existing one — no blanking. */
-    while (written < raw_size && packed_consumed < packed_size) {
-        uint16_t run_len;
-
-        if (!read_pack_byte_buffered(&token)) {
-            close_scene_pack();
-            return 0;
-        }
-        ++packed_consumed;
-
-        if (token < 128u) {
-            run_len = (uint16_t)(token + 1u);
-            if ((uint16_t)(packed_consumed + run_len) > packed_size || (uint16_t)(written + run_len) > raw_size) {
-                close_scene_pack();
-                return 0;
-            }
-            while (run_len-- > 0u) {
-                if (!read_pack_byte_buffered(&byte_value)) {
-                    close_scene_pack();
-                    return 0;
-                }
-                ++packed_consumed;
-                BITMAP_RAM[written++] = byte_value;
-            }
-        } else {
-            run_len = (uint16_t)(token - 127u);
-            if ((uint16_t)(packed_consumed + 1u) > packed_size || (uint16_t)(written + run_len) > raw_size) {
-                close_scene_pack();
-                return 0;
-            }
-            if (!read_pack_byte_buffered(&byte_value)) {
-                close_scene_pack();
-                return 0;
-            }
-            ++packed_consumed;
-            memset(&BITMAP_RAM[written], byte_value, run_len);
-            written = (uint16_t)(written + run_len);
-        }
-    }
-
-    close_scene_pack();
-    return (uint8_t)(written == raw_size && packed_consumed == packed_size);
+    memset(&BITMAP_RAM[BITMAP_TOP_HALF_BYTES], 0x00, BITMAP_TOP_HALF_BYTES);
+    return 1;
 }
 
 /*
- * Purpose: Load one scene from pack trying common IEC devices.
+ * Purpose: Load one scene from disk trying common IEC devices.
  * Inputs: scene_id.
  * Returns: 1 on success, 0 on failure.
  */
-static uint8_t load_bitmap_from_pack(uint8_t scene_id)
+static uint8_t load_bitmap_from_disk(uint8_t scene_id)
 {
     uint8_t i;
     uint8_t device_candidates[4];
@@ -759,7 +487,7 @@ static uint8_t load_bitmap_from_pack(uint8_t scene_id)
     if (last_dev != 11u) { device_candidates[candidate_count++] = 11; }
 
     for (i = 0; i < candidate_count; ++i) {
-        if (load_bitmap_from_pack_device(scene_id, device_candidates[i])) {
+        if (load_scene_file_for_device(scene_id, device_candidates[i])) {
             return 1;
         }
     }
@@ -774,7 +502,7 @@ static uint8_t load_bitmap_from_pack(uint8_t scene_id)
  */
 static uint8_t load_bitmap_for_scene(uint8_t scene_id)
 {
-    return load_bitmap_from_pack(scene_id);
+    return load_bitmap_from_disk(scene_id);
 }
 
 /*
@@ -933,7 +661,7 @@ int main(void)
     apply_monochrome_palette();
     set_debug_marker('P', COLOR_WHITE);
 
-    write_text(0, 0, "FILE MODE: RAW PACK 00", COLOR_LIGHTGREEN);
+    write_text(0, 0, "FILE MODE: 01-30", COLOR_LIGHTGREEN);
     set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */

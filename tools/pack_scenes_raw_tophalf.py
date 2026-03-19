@@ -27,7 +27,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Pack SCENE??.BMP files into RAW1 uncompressed top-half scene pack"
     )
-    parser.add_argument("--input-dir", required=True, help="Directory containing SCENE??.BMP files")
+    parser.add_argument("--input-dir", required=True, help="Directory containing SCENE??.BMP files (e.g. gfx/bmp)")
     parser.add_argument("--output-file", required=True, help="Output pack file path")
     args = parser.parse_args()
 

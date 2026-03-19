@@ -8,7 +8,7 @@ So for a 320x200 bitmap, we render a centered 184x100 image, which displays corr
 Workflow stage 2:
 - Input: `gfx/images/sceneNN.png` (from `tools/crop_images.py`)
 - Temp: `gfx/c64/sceneNN_c64.png` (dithered 1-bit C64 working image)
-- Output: `SCENENN.BMP`, `build/SCENENN.BMP`, `src/sceneNN_bitmap.h`
+- Output: `gfx/bmp/SCENENN.BMP`, `build/SCENENN.BMP`, `src/sceneNN_bitmap.h`
 """
 
 from pathlib import Path
@@ -134,6 +134,7 @@ def main() -> None:
     workspace_root = Path(__file__).resolve().parent.parent
     images_dir = workspace_root / "gfx" / "images"
     temp_c64_dir = workspace_root / "gfx" / "c64"
+    bmp_dir = workspace_root / "gfx" / "bmp"
     scenes = discover_scenes(images_dir)
 
     if not images_dir.exists():
@@ -149,7 +150,7 @@ def main() -> None:
     for scene in scenes:
         scene_id = scene["id"]
         input_path = scene["input_path"]
-        output_root = workspace_root / f"SCENE{scene_id:02d}.BMP"
+        output_root = bmp_dir / f"SCENE{scene_id:02d}.BMP"
         output_build = workspace_root / f"build/SCENE{scene_id:02d}.BMP"
         output_header = workspace_root / f"src/scene{scene_id:02d}_bitmap.h"
         output_temp_c64 = temp_c64_dir / f"scene{scene_id:02d}_c64.png"

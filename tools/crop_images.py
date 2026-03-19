@@ -14,6 +14,7 @@ from PIL import Image
 TARGET_WIDTH = 345
 TARGET_HEIGHT = 212
 TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT
+INSET_FRACTION = 0.10
 
 
 def resize_and_center_crop(image_path: str, output_path: str) -> None:
@@ -26,10 +27,25 @@ def resize_and_center_crop(image_path: str, output_path: str) -> None:
     """
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
-    current_ratio = width / height
+
+    inset_x = int(round(width * INSET_FRACTION))
+    inset_y = int(round(height * INSET_FRACTION))
+    zoom_left = max(0, inset_x)
+    zoom_top = max(0, inset_y)
+    zoom_right = min(width, width - inset_x)
+    zoom_bottom = min(height, height - inset_y)
+
+    if zoom_right <= zoom_left or zoom_bottom <= zoom_top:
+        zoom_left, zoom_top, zoom_right, zoom_bottom = 0, 0, width, height
+
+    zoomed = img.crop((zoom_left, zoom_top, zoom_right, zoom_bottom))
+    zoomed_width, zoomed_height = zoomed.size
+    current_ratio = zoomed_width / zoomed_height
     
     print(f"Processing: {Path(image_path).name}")
-    print(f"  Original size: {width}x{height} (ratio: {current_ratio:.2f})")
+    print(f"  Original size: {width}x{height}")
+    print(f"  Zoom crop: x={zoom_left}:{zoom_right}, y={zoom_top}:{zoom_bottom} ({zoomed_width}x{zoomed_height})")
+    print(f"  Zoomed ratio: {current_ratio:.2f}")
     print(f"  Target size: {TARGET_WIDTH}x{TARGET_HEIGHT} (ratio: {TARGET_RATIO:.2f})")
 
     if current_ratio < TARGET_RATIO:
@@ -39,7 +55,7 @@ def resize_and_center_crop(image_path: str, output_path: str) -> None:
         resized_height = TARGET_HEIGHT
         resized_width = int(round(TARGET_HEIGHT * current_ratio))
 
-    resized = img.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
+    resized = zoomed.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
 
     left = max(0, (resized_width - TARGET_WIDTH) // 2)
     top = max(0, (resized_height - TARGET_HEIGHT) // 2)
