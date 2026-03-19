@@ -56,7 +56,7 @@ def compress_scene(input_path: Path) -> tuple[bytes, int]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compress SCENE??.BMP files into one indexed RLE pack for C64 disk images.")
-    parser.add_argument("--input-dir", required=True, help="Directory containing SCENE??.BMP files")
+    parser.add_argument("--input-dir", required=True, help="Directory containing SCENE??.BMP files (e.g. gfx/bmp)")
     parser.add_argument("--output-file", required=True, help="Output pack file path")
     args = parser.parse_args()
 

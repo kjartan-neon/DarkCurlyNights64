@@ -63,7 +63,7 @@ def build_pack(scene_files: list[tuple[int, Path]]) -> bytes:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Build SCENES.BIN from SCENENN.BMP files")
-    parser.add_argument("--input-dir", type=Path, default=Path("."), help="Directory with SCENENN.BMP files")
+    parser.add_argument("--input-dir", type=Path, default=Path("gfx/bmp"), help="Directory with SCENENN.BMP files")
     parser.add_argument("--output", type=Path, default=Path("SCENES.BIN"), help="Output packed file")
     parser.add_argument("--copy-to-build", action="store_true", help="Also copy output file into build/SCENES.BIN")
     args = parser.parse_args()

@@ -12,7 +12,7 @@ python3 tools/crop_images.py
 echo "[2/3] Generating C64 temp images + scene assets"
 python3 tools/generate_scene_assets.py
 
-echo "[3/3] Packing scene bitmaps into SCENES.BIN"
-python3 tools/build_scene_pack.py --input-dir . --output SCENES.BIN --copy-to-build
+echo "[3/3] Packing raw top-half scenes from gfx/bmp into build/scenes_pack.bin"
+python3 tools/pack_scenes_raw_tophalf.py --input-dir gfx/bmp --output-file build/scenes_pack.bin
 
 echo "Done: image pipeline rebuilt successfully."

@@ -1,137 +1,20 @@
 # DarkCurlyNights64
 
-C64 interactive story prototype using VS64 + llvm-mos.
+C64 interactive story prototype built with VS64 + llvm-mos.
 
-## Story pipeline
+This repository includes a ready-to-run disk image at:
 
-`story.md` is the authoring source.
+- `build/DarkCurlyNights64.d64`
 
-Generate machine-readable data + C data header:
+So anyone can clone/download and launch directly in VICE.
 
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-python3 tools/story_compiler.py
-```
+## Quick start (play now)
 
-Outputs:
-
-- `story_compiled.json` (machine-readable story graph)
-- `src/generated_story.h` (generated C data used by the game)
-
-## Image pipeline
-
-Use this workflow when adding scene images:
-
-1. Put source images in `gfx/originals/` named `scene01.png`, `scene02.png`, etc.
-2. Crop/fit them into `gfx/images/`.
-3. Generate C64 temporary images in `gfx/c64/` and final assets/headers.
-
-Run commands:
+1. Get `build/DarkCurlyNights64.d64` from this repo.
+2. Launch in VICE:
 
 ```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-python3 tools/crop_images.py
-python3 tools/generate_scene_asset.py
-```
-
-Or run the full image pipeline in one command:
-
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-./tools/rebuild_images.sh
-```
-
-VS Code task: `Images: Rebuild Pipeline`
-
-Generated files:
-
-- `gfx/images/sceneNN.png` (cropped 600x212)
-- `gfx/c64/sceneNN_c64.png` (temporary 1-bit 320x100 C64 image)
-- `SCENENN.BMP` and `build/SCENENN.BMP`
-- `SCENES.BIN` and `build/SCENES.BIN` (single packed bitmap file)
-- `src/sceneNN_bitmap.h`
-
-At runtime, scene image loading order is:
-
-1. Embedded bitmap (scenes 1-3)
-2. Packed file `SCENES.BIN`
-3. Legacy per-scene file `SCENENN.BMP` fallback
-
-## Disk image workflow (VICE)
-
-If you launch only a standalone `.prg`, file loading may fail depending on VICE drive setup.
-Using a disk image is the most reliable workflow.
-
-Build packed assets + program + disk image:
-
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-./tools/rebuild_images.sh
-ninja -C build
-./tools/build_disk_image.sh --type d81 --output build/DarkCurlyNights64.d81
-```
-
-Run in VICE from disk image:
-
-```zsh
-/Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64/build/DarkCurlyNights64.d81
-```
-
-### Why `d81` and not `d64`?
-
-- `SCENES.BIN` + program is currently larger than practical `d64` payload.
-- `d81` has enough capacity for the full packed story assets.
-- `tools/build_disk_image.sh --type d64` fails with a clear size error if content is too large.
-
-## Build
-
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-ninja -C build
-```
-
-## Config backup templates
-
-Known-good VS Code and build configuration snapshots are stored under:
-
-- `examples/vscode/`
-- `examples/build/`
-
-These files are examples/snapshots to recover quickly if local config is broken.
-
-### Restore working VS Code config files
-
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-cp examples/vscode/settings.example.json .vscode/settings.json
-cp examples/vscode/tasks.example.json .vscode/tasks.json
-cp examples/vscode/launch.example.json .vscode/launch.json
-cp examples/vscode/c_cpp_properties.example.json .vscode/c_cpp_properties.json
-```
-
-### Restore build metadata files (same machine / same path)
-
-```zsh
-cd /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64
-mkdir -p build
-cp examples/build/build.ninja.example build/build.ninja
-cp examples/build/compile_commands.example.json build/compile_commands.json
-```
-
-### Starting on another computer
-
-`examples/build/*` may contain absolute paths from this machine. On a different machine:
-
-1. Restore `.vscode` files from `examples/vscode/*`
-2. Update emulator / llvm-mos paths in `.vscode/settings.json`
-3. Regenerate build files by opening the folder in VS Code with VS64 installed and running the default build task
-
-For more details, see `examples/README.md`.
-
-## Run in VICE
-
-```zsh
-/Applications/vice-arm64-gtk3-3.10/bin/x64sc /Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64/build/DarkCurlyNights64.prg
+/Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
 ```
 
 ## Controls
@@ -140,7 +23,104 @@ For more details, see `examples/README.md`.
 - `R`: restart after ending scene
 - `Q`: quit
 
-## Screen layout
+## Current runtime and disk layout
 
-- Top ~75% (rows 0-17): color-bar raster-style graphics area (demo bars)
-- Bottom ~25% (rows 18-24): scene title, description, and player options
+- Runtime loads scenes as **per-scene files** from disk (`01`..`30`).
+- Disk build writes:
+	- program: `DARK64`
+	- scene files: `01`, `02`, ..., `30`
+- Scene filename format intentionally uses numbers only (no `S` prefix).
+- Main tested target is `d64`.
+
+## Repository structure (important paths)
+
+- `src/main.c`: game runtime and scene loading logic
+- `story.md`: authoring source for story content
+- `story_compiled.json`: compiled story graph
+- `src/generated_story.h`: generated story data used by C code
+- `gfx/originals/`: source artwork (`sceneNN.png`)
+- `gfx/images/`: cropped output images
+- `gfx/c64/`: temporary C64-converted images
+- `gfx/bmp/`: generated `SCENENN.BMP` scene assets (moved from repo root)
+- `build/DarkCurlyNights64.d64`: distributable disk image
+
+## Story pipeline
+
+Compile authored story content into runtime data:
+
+```zsh
+python3 tools/story_compiler.py
+```
+
+Outputs:
+
+- `story_compiled.json`
+- `src/generated_story.h`
+
+## Image pipeline
+
+### Source expectations
+
+- Put input images in `gfx/originals/` as `scene01.png` ... `scene30.png`.
+
+### Crop behavior
+
+- Crop uses a 10% inset on all sides (zoom-in effect), then fits to fixed output size.
+- Final output size remains `345x212`.
+
+### Run full pipeline
+
+```zsh
+./tools/rebuild_images.sh
+```
+
+This runs:
+
+1. `tools/crop_images.py` (`gfx/originals` -> `gfx/images`)
+2. `tools/generate_scene_asset.py` (produces scene assets + headers)
+3. `tools/pack_scenes_raw_tophalf.py --input-dir gfx/bmp` (builds packed helper artifact)
+
+Generated artifacts include:
+
+- `gfx/images/sceneNN.png`
+- `gfx/c64/sceneNN_c64.png`
+- `gfx/bmp/SCENENN.BMP`
+- `src/sceneNN_bitmap.h`
+- `build/scenes_pack.bin`
+
+## Build and disk creation
+
+Build program:
+
+```zsh
+ninja -C build
+```
+
+Build disk image:
+
+```zsh
+./tools/build_disk_image.sh --type d64
+```
+
+Output:
+
+- `build/DarkCurlyNights64.d64`
+
+The disk build script consumes `gfx/bmp/SCENENN.BMP` and writes numeric scene files (`01`..`30`) to the disk image.
+
+## Emulator smoke test (headless log check)
+
+```zsh
+pkill -f x64sc || true
+rm -f /tmp/darkcurlynights64-vice-verbose.log
+(/Applications/vice-arm64-gtk3-3.10/bin/x64sc --verbose -autostart "build/DarkCurlyNights64.d64" > /tmp/darkcurlynights64-vice-verbose.log 2>&1 &) \
+	&& sleep 15 \
+	&& pkill -f x64sc || true
+grep -n "AUTOSTART:\|JAM\|BITMAP LOAD FAILED\|LOAD ERROR" /tmp/darkcurlynights64-vice-verbose.log | tail -80
+```
+
+## VS Code notes
+
+- VS Code example/snapshot config is under `examples/vscode/`.
+- Build metadata snapshots are under `examples/build/`.
+- See `examples/README.md` for recovery/bootstrap notes.

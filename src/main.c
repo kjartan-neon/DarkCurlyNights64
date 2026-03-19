@@ -47,10 +47,10 @@
 #define BITMAP_CHAR_HEIGHT 8
 #define BITMAP_ROW_STRIDE 320u
 #define BITMAP_TOTAL_BYTES 8000u
+#define BITMAP_TOP_HALF_BYTES 4000u
 #define FONT_BYTES 1024u
 
 #define BITMAP_LOAD_ADDR ((void*)0xE000)
-#define SCENE_PACK_FILENAME "00"
 
 /* Debug marker shown as border color + top-left character while booting. */
 static volatile uint8_t debug_stage = 0;
@@ -67,7 +67,6 @@ static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color
 static void set_debug_marker(uint8_t stage, uint8_t border)
 {
     uint8_t screen_code = 31;
-    uint16_t i;
 
     debug_stage = stage;
     BORDER_COLOR = border;
@@ -78,11 +77,6 @@ static void set_debug_marker(uint8_t stage, uint8_t border)
 
     ((uint8_t*)0x0400)[0] = screen_code;
     ((uint8_t*)0xD800)[0] = COLOR_WHITE;
-
-    /* Short pause for boot-stage visibility in debug builds. */
-    for (i = 0; i < 1000; ++i) {
-        __asm__("nop");
-    }
 }
 
 /*
@@ -442,222 +436,42 @@ static void draw_top_fallback(void)
 }
 
 /*
- * Purpose: Open compressed scene pack file on one device for reading.
- * Inputs: device number.
- * Returns: 1 on success, 0 on failure.
- */
-static uint8_t open_scene_pack_for_device(uint8_t device)
-{
-    cbm_k_setlfs(2, device, 0);
-    cbm_k_setnam(SCENE_PACK_FILENAME);
-    cbm_k_open();
-    if ((cbm_k_readst() & 0x3Fu) != 0) {
-        cbm_k_clall();
-        return 0;
-    }
-
-    cbm_k_chkin(2);
-    if ((cbm_k_readst() & 0x3Fu) != 0) {
-        cbm_k_close(2);
-        cbm_k_clall();
-        return 0;
-    }
-
-    return 1;
-}
-
-/*
- * Purpose: Close compressed scene pack channel.
- * Inputs: none.
- * Returns: nothing.
- */
-static void close_scene_pack(void)
-{
-    cbm_k_clrch();
-    cbm_k_close(2);
-    cbm_k_clall();
-}
-
-/*
- * Purpose: Read one byte from active scene pack channel.
- * Inputs: out_byte pointer.
- * Returns: 1 on success, 0 on hard read error.
- */
-static uint8_t read_pack_byte(uint8_t* out_byte)
-{
-    uint8_t status;
-
-    *out_byte = cbm_k_chrin();
-    status = cbm_k_readst();
-    return (uint8_t)((status & 0x3Fu) == 0);
-}
-
-static uint8_t read_pack_u16(uint16_t* out_value)
-{
-    uint8_t lo;
-    uint8_t hi;
-
-    if (!read_pack_byte(&lo) || !read_pack_byte(&hi)) {
-        return 0;
-    }
-    *out_value = (uint16_t)(lo | ((uint16_t)hi << 8));
-    return 1;
-}
-
-static uint8_t read_pack_u32(uint32_t* out_value)
-{
-    uint8_t b0;
-    uint8_t b1;
-    uint8_t b2;
-    uint8_t b3;
-
-    if (!read_pack_byte(&b0) || !read_pack_byte(&b1) || !read_pack_byte(&b2) || !read_pack_byte(&b3)) {
-        return 0;
-    }
-    *out_value = (uint32_t)b0;
-    *out_value |= ((uint32_t)b1 << 8);
-    *out_value |= ((uint32_t)b2 << 16);
-    *out_value |= ((uint32_t)b3 << 24);
-    return 1;
-}
-
-/*
- * Purpose: Read and validate compressed RPK1 pack header.
- * Inputs: out_scene_count pointer.
- * Returns: 1 on valid header, 0 on failure.
- */
-static uint8_t read_pack_header(uint8_t* out_scene_count)
-{
-    uint8_t ignored;
-    uint8_t magic[4];
-    uint8_t i;
-
-    if (!read_pack_byte(&ignored) || !read_pack_byte(&ignored)) {
-        return 0;
-    }
-
-    for (i = 0; i < 4u; ++i) {
-        if (!read_pack_byte(&magic[i])) {
-            return 0;
-        }
-    }
-
-    if (magic[0] != 'R' || magic[1] != 'P' || magic[2] != 'K' || magic[3] != '1') {
-        return 0;
-    }
-
-    return read_pack_byte(out_scene_count);
-}
-
-/*
- * Purpose: Load one scene from compressed pack on one specific device.
+ * Purpose: Load one scene file (01..30) on one specific device.
  * Inputs: scene_id, device.
  * Returns: 1 on success, 0 on failure.
  */
-static uint8_t load_bitmap_from_pack_device(uint8_t scene_id, uint8_t device)
+static uint8_t load_scene_file_for_device(uint8_t scene_id, uint8_t device)
 {
-    uint8_t i;
-    uint8_t scene_count;
-    uint8_t token;
-    uint8_t byte_value;
-    uint32_t scene_offset = 0;
-    uint16_t packed_size = 0;
-    uint16_t raw_size = 0;
-    uint16_t packed_consumed = 0;
-    uint16_t written = 0;
+    char filename[3] = {'0', '1', '\0'};
+    uint8_t status;
 
-    if (!open_scene_pack_for_device(device)) {
-        return 0;
-    }
-    if (!read_pack_header(&scene_count)) {
-        close_scene_pack();
-        return 0;
-    }
-    if (scene_id == 0u || scene_id > scene_count) {
-        close_scene_pack();
+    if (scene_id == 0u || scene_id > 30u) {
         return 0;
     }
 
-    for (i = 1; i <= scene_count; ++i) {
-        uint32_t entry_offset;
-        uint16_t entry_packed;
-        uint16_t entry_raw;
+    filename[0] = (char)('0' + (scene_id / 10u));
+    filename[1] = (char)('0' + (scene_id % 10u));
 
-        if (!read_pack_u32(&entry_offset) || !read_pack_u16(&entry_packed) || !read_pack_u16(&entry_raw)) {
-            close_scene_pack();
-            return 0;
-        }
+    cbm_k_setlfs(2, device, 0);
+    cbm_k_setnam(filename);
+    cbm_k_load(0, BITMAP_LOAD_ADDR);
+    status = cbm_k_readst();
+    cbm_k_clall();
 
-        if (i == scene_id) {
-            scene_offset = entry_offset;
-            packed_size = entry_packed;
-            raw_size = entry_raw;
-        }
-    }
-
-    if (packed_size == 0u || raw_size != BITMAP_TOTAL_BYTES) {
-        close_scene_pack();
+    if ((status & 0x3Fu) != 0) {
         return 0;
     }
 
-    while (scene_offset > 0u) {
-        if (!read_pack_byte(&byte_value)) {
-            close_scene_pack();
-            return 0;
-        }
-        --scene_offset;
-    }
-
-    /* Draw new image directly on top of the existing one — no blanking. */
-    while (written < raw_size && packed_consumed < packed_size) {
-        uint16_t run_len;
-
-        if (!read_pack_byte(&token)) {
-            close_scene_pack();
-            return 0;
-        }
-        ++packed_consumed;
-
-        if (token < 128u) {
-            run_len = (uint16_t)(token + 1u);
-            if ((uint16_t)(packed_consumed + run_len) > packed_size || (uint16_t)(written + run_len) > raw_size) {
-                close_scene_pack();
-                return 0;
-            }
-            while (run_len-- > 0u) {
-                if (!read_pack_byte(&byte_value)) {
-                    close_scene_pack();
-                    return 0;
-                }
-                ++packed_consumed;
-                BITMAP_RAM[written++] = byte_value;
-            }
-        } else {
-            run_len = (uint16_t)(token - 127u);
-            if ((uint16_t)(packed_consumed + 1u) > packed_size || (uint16_t)(written + run_len) > raw_size) {
-                close_scene_pack();
-                return 0;
-            }
-            if (!read_pack_byte(&byte_value)) {
-                close_scene_pack();
-                return 0;
-            }
-            ++packed_consumed;
-            memset(&BITMAP_RAM[written], byte_value, run_len);
-            written = (uint16_t)(written + run_len);
-        }
-    }
-
-    close_scene_pack();
-    return (uint8_t)(written == raw_size && packed_consumed == packed_size);
+    memset(&BITMAP_RAM[BITMAP_TOP_HALF_BYTES], 0x00, BITMAP_TOP_HALF_BYTES);
+    return 1;
 }
 
 /*
- * Purpose: Load one scene from compressed pack trying common IEC devices.
+ * Purpose: Load one scene from disk trying common IEC devices.
  * Inputs: scene_id.
  * Returns: 1 on success, 0 on failure.
  */
-static uint8_t load_bitmap_from_pack(uint8_t scene_id)
+static uint8_t load_bitmap_from_disk(uint8_t scene_id)
 {
     uint8_t i;
     uint8_t device_candidates[4];
@@ -673,7 +487,7 @@ static uint8_t load_bitmap_from_pack(uint8_t scene_id)
     if (last_dev != 11u) { device_candidates[candidate_count++] = 11; }
 
     for (i = 0; i < candidate_count; ++i) {
-        if (load_bitmap_from_pack_device(scene_id, device_candidates[i])) {
+        if (load_scene_file_for_device(scene_id, device_candidates[i])) {
             return 1;
         }
     }
@@ -688,7 +502,7 @@ static uint8_t load_bitmap_from_pack(uint8_t scene_id)
  */
 static uint8_t load_bitmap_for_scene(uint8_t scene_id)
 {
-    return load_bitmap_from_pack(scene_id);
+    return load_bitmap_from_disk(scene_id);
 }
 
 /*
@@ -747,22 +561,6 @@ static void clear_story_area(void)
     for (row = DESC_ROW_START; row < SCREEN_H; ++row) {
         clear_line(row, COLOR_WHITE);
     }
-}
-
-/*
- * Purpose: Draw new scene story text + PLEASE WAIT in the cleared story area.
- * Inputs: scene pointer.
- * Returns: nothing.
- */
-static void draw_scene_loading_phase(const StoryScene* scene)
-{
-    clear_story_area();
-
-    write_text(13, 0, "SCENE:", COLOR_YELLOW);
-    write_text(13, 7, scene->title, COLOR_YELLOW);
-
-    render_description_page_rows(scene->description, 0, 1, DESC_ROW_START, (uint8_t)(DESC_ROWS + OPTION_ROWS), 0);
-    write_text(24, 0, "PLEASE WAIT. LOADING IMAGE...", COLOR_CYAN);
 }
 
 /*
@@ -863,7 +661,7 @@ int main(void)
     apply_monochrome_palette();
     set_debug_marker('P', COLOR_WHITE);
 
-    write_text(0, 0, "FILE MODE: RLE PACK 00", COLOR_LIGHTGREEN);
+    write_text(0, 0, "FILE MODE: 01-30", COLOR_LIGHTGREEN);
     set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */
@@ -882,9 +680,13 @@ int main(void)
             uint8_t key;
 
             if (!scene_ready) {
-                draw_scene_loading_phase(scene);
-
                 if (loaded_bitmap_scene_id != scene->id) {
+                    /* Clear story area and show title/text while image streams in. */
+                    clear_story_area();
+                    write_text(13, 0, "SCENE:", COLOR_YELLOW);
+                    write_text(13, 7, scene->title, COLOR_YELLOW);
+                    render_description_page_rows(scene->description, 0, 1, DESC_ROW_START, (uint8_t)(DESC_ROWS + OPTION_ROWS), 0);
+
                     if (!load_bitmap_for_scene(scene->id)) {
                         write_text(0, 0, "BITMAP LOAD FAILED", COLOR_LIGHTRED);
                     } else {
@@ -895,9 +697,6 @@ int main(void)
                 draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);
                 draw_scene_options(scene, desc_page, desc_page_count);
                 scene_ready = 1;
-
-                while (cbm_k_getin() != 0) {
-                }
             } else {
                 /* Redraw story and options on SPACE (page turn). */
                 draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);

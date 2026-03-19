@@ -2,8 +2,8 @@
 # build_disk_image.sh — Assembles a C64 disk image for DarkCurlyNights64.
 #
 # D64 capacity: 664 free blocks after format.
-# Scene images are compressed into one indexed pack file ("00").
-# This avoids per-file block slack and allows all 30 scenes on one D64.
+# Scene images are stored as per-scene raw top-half files (01..30).
+# Each file contains load address + 4000 bytes bitmap payload.
 #
 set -euo pipefail
 
@@ -15,7 +15,6 @@ C1541_BIN="${C1541_BIN:-/Applications/vice-arm64-gtk3-3.10/bin/c1541}"
 IMAGE_TYPE="d64"
 IMAGE_PATH=""
 PRG_PATH="${BUILD_DIR}/DarkCurlyNights64.prg"
-COMPRESSOR="${REPO_ROOT}/tools/compress_scenes_rle.py"
 
 # Free blocks after format (as reported by c1541/BASIC)
 D64_CAPACITY=664
@@ -54,27 +53,38 @@ fi
 if [[ ! -f "$PRG_PATH" ]]; then
   echo "PRG not found: ${PRG_PATH}  (run: ninja -C build)" >&2; exit 1
 fi
-if [[ ! -f "$COMPRESSOR" ]]; then
-  echo "Compressor script not found: ${COMPRESSOR}" >&2; exit 1
-fi
 
 # ── Collect source scene files ────────────────────────────────────────────────
-all_scenes=("${REPO_ROOT}"/SCENE??.BMP(N))
+all_scenes=("${REPO_ROOT}"/gfx/bmp/SCENE??.BMP(N))
 total_scenes=${#all_scenes[@]}
 
 if (( total_scenes == 0 )); then
-  echo "No SCENE??.BMP files found in ${REPO_ROOT}" >&2; exit 1
+  echo "No SCENE??.BMP files found in ${REPO_ROOT}/gfx/bmp" >&2; exit 1
 fi
 
-# ── Build compressed scene pack ───────────────────────────────────────────────
+# ── Build per-scene top-half files ────────────────────────────────────────────
 TMPDIR_SCENES="$(mktemp -d)"
-SCENE_PACK_FILE="${TMPDIR_SCENES}/00"
 trap 'rm -rf "$TMPDIR_SCENES"' EXIT
 
-python3 "$COMPRESSOR" --input-dir "$REPO_ROOT" --output-file "$SCENE_PACK_FILE" >/dev/null
-if [[ ! -f "$SCENE_PACK_FILE" ]]; then
-  echo "Compression failed: pack file not generated." >&2; exit 1
-fi
+for scene_path in "${all_scenes[@]}"; do
+  scene_name="${scene_path:t}"
+  scene_id="${scene_name#SCENE}"
+  scene_id="${scene_id%.BMP}"
+  out_name="${scene_id}"
+
+  python3 - "$scene_path" "${TMPDIR_SCENES}/${out_name}" <<'PY'
+import sys
+from pathlib import Path
+
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+payload = src.read_bytes()
+if len(payload) < 4002:
+    raise SystemExit(f"Scene file too small: {src} ({len(payload)} bytes)")
+
+dst.write_bytes(payload[:4002])
+PY
+done
 
 # ceil(n / 254)
 ceil_blocks() { echo $(( ($1 + 253) / 254 )); }
@@ -89,11 +99,18 @@ else
 fi
 
 remaining=$(( capacity - prg_blocks ))
-pack_bytes=$(stat -f "%z" "$SCENE_PACK_FILE")
-pack_blocks=$(ceil_blocks "$pack_bytes")
+scene_total_bytes=0
+scene_total_blocks=0
 
-if (( pack_blocks > remaining )); then
-  echo "Compressed pack does not fit on ${IMAGE_TYPE}: ${pack_blocks} blocks needed, ${remaining} available." >&2
+for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
+  scene_bytes=$(stat -f "%z" "$scene_file")
+  scene_blocks=$(ceil_blocks "$scene_bytes")
+  scene_total_bytes=$(( scene_total_bytes + scene_bytes ))
+  scene_total_blocks=$(( scene_total_blocks + scene_blocks ))
+done
+
+if (( scene_total_blocks > remaining )); then
+  echo "Scene files do not fit on ${IMAGE_TYPE}: ${scene_total_blocks} blocks needed, ${remaining} available." >&2
   exit 1
 fi
 
@@ -101,9 +118,9 @@ image_type_upper=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')
 echo "Disk layout (${image_type_upper}):"
 printf "  Capacity  : %d blocks\n" "$capacity"
 printf "  PRG       : %d blocks (%d bytes)\n" "$prg_blocks" "$prg_bytes"
-printf "  Scenes    : %d compressed in pack\n" "$total_scenes"
-printf "  Pack (00) : %d blocks (%d bytes)\n" "$pack_blocks" "$pack_bytes"
-printf "  Used      : %d / %d blocks\n" "$(( prg_blocks + pack_blocks ))" "$capacity"
+printf "  Scenes    : %d raw top-half files\n" "$total_scenes"
+printf "  Scene data: %d blocks (%d bytes)\n" "$scene_total_blocks" "$scene_total_bytes"
+printf "  Used      : %d / %d blocks\n" "$(( prg_blocks + scene_total_blocks ))" "$capacity"
 
 # ── Create image ──────────────────────────────────────────────────────────────
 mkdir -p "$(dirname "$IMAGE_PATH")"
@@ -116,9 +133,13 @@ rm -f "$IMAGE_PATH"
 echo ""
 printf "  %-8s  %d bytes\n" "DARK64" "$prg_bytes"
 
-# ── Write compressed scene pack ───────────────────────────────────────────────
-"$C1541_BIN" "$IMAGE_PATH" -write "$SCENE_PACK_FILE" 00 >/dev/null
-printf "  %-8s  %d bytes\n" "00" "$pack_bytes"
+# ── Write scene files (01..NN) ────────────────────────────────────────────────
+for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
+  scene_name="${scene_file:t}"
+  scene_bytes=$(stat -f "%z" "$scene_file")
+  "$C1541_BIN" "$IMAGE_PATH" -write "$scene_file" "$scene_name" >/dev/null
+  printf "  %-8s  %d bytes\n" "$scene_name" "$scene_bytes"
+done
 
 echo ""
-echo "Built: ${IMAGE_PATH}  (${total_scenes} scenes in compressed pack)"
+echo "Built: ${IMAGE_PATH}  (${total_scenes} scenes as raw top-half files)"
