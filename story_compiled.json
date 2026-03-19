@@ -115,7 +115,7 @@
     {
       "id": 5,
       "title": "CONFIRMED IDENTITY",
-      "description": "IDENTITY CONFIRMED: SUBJECT L-73. The screen flashes. A compressed audio log plays: \"The Middle East exchange... the thermal bloom... the Gulf Stream has collapsed. We are activating AETHELRED. Welcome to the new Ice Age, L-73. Report to the Core.\"",
+      "description": "IDENTITY CONFIRMED: SUBJECT K-81. The screen flashes. A compressed audio log plays: \"The Middle East exchange... the thermal bloom... the Gulf Stream has collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to the Core.\"",
       "grants": [],
       "options": [
         {
@@ -235,11 +235,11 @@
       "options": [
         {
           "letter": "A",
-          "text": "\"I am L-73, Leader Class. Just awakened.\"",
+          "text": "\"I am K-81, Leader Class. Just awakened.\"",
           "target_scene": 11,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "\"I am L-73, Leader Class. Just awakened.\" (Go to SCENE 11)"
+          "raw": "\"I am K-81, Leader Class. Just awakened.\" (Go to SCENE 11)"
         },
         {
           "letter": "B",
@@ -421,18 +421,18 @@
       "options": [
         {
           "letter": "A",
-          "text": "Continue to SCENE 19.",
+          "text": "Help Elara",
           "target_scene": 19,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Continue to SCENE 19."
+          "raw": "Help Elara (GO to SCENE 19)"
         }
       ]
     },
     {
       "id": 19,
       "title": "ASSIGNMENT",
-      "description": "Your awakening is logged. The AI Core flashes your duties. L-73 ASSIGNMENT: OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.",
+      "description": "Your awakening is logged. The AI Core flashes your duties. K-81 ASSIGNMENT: OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.",
       "grants": [],
       "options": [
         {
@@ -496,7 +496,7 @@
     {
       "id": 22,
       "title": "COFFEE AND COMPLICITY",
-      "description": "The aroma of real coffee fills the sterile deck. Her eyes widen. \"This... this is contraband, L-73.\" She laughs, a rare, beautiful sound. You drink the bitter brew together.",
+      "description": "The aroma of real coffee fills the sterile deck. Her eyes widen. \"This... this is contraband, K-81.\" She laughs, a rare, beautiful sound. You drink the bitter brew together.",
       "grants": [
         "coffee"
       ],
@@ -538,16 +538,16 @@
     {
       "id": 24,
       "title": "THE KISS",
-      "description": "The proximity and the crushing loneliness merge. You look at her, and she is the only other human that matters. Your lips meet. It is desperate and electric.",
+      "description": "The proximity. You look at her, and she is the only other human that matters. Your lips meet. It feels forbidden, it is felectric.",
       "grants": [],
       "options": [
         {
           "letter": "A",
-          "text": "Embrace the forbidden romance",
+          "text": "Embrace the love",
           "target_scene": 25,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Embrace the forbidden romance. (Go to SCENE 25)"
+          "raw": "Embrace the love (Go to SCENE 25)"
         }
       ]
     },
@@ -618,7 +618,7 @@
     {
       "id": 28,
       "title": "IMPOSSIBLE CHOICES",
-      "description": "You find Elara in the hidden tunnel. \"When you wake up, I\u2019ll be 32, L-73. And you... you\u2019ll still be you. My whole youth will happen while you sleep.\"",
+      "description": "You find Elara in the hidden tunnel. \"When you wake up, I\u2019ll be 32, K-81. And you... you\u2019ll still be you. My whole youth will happen while you sleep.\"",
       "grants": [],
       "options": [
         {
