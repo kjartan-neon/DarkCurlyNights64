@@ -3,7 +3,7 @@
 
 Workflow stage 1:
 - Input: `gfx/originals/sceneNN.png`
-- Output: `gfx/images/sceneNN.png` (center-cropped 600x212)
+- Output: `gfx/images/sceneNN.png` (center-cropped 345x212)
 """
 
 import sys
@@ -11,14 +11,14 @@ from pathlib import Path
 from PIL import Image
 
 
-TARGET_WIDTH = 600
+TARGET_WIDTH = 345
 TARGET_HEIGHT = 212
 TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT
 
 
 def resize_and_center_crop(image_path: str, output_path: str) -> None:
     """
-    Resize an image to fill the target area, then center-crop to 600x212.
+    Resize an image to fill the target area, then center-crop to 345x212.
     
     Args:
         image_path: Path to input image in gfx/originals/
