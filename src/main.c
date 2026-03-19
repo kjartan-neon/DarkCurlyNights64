@@ -54,7 +54,6 @@
 
 /* Debug marker shown as border color + top-left character while booting. */
 static volatile uint8_t debug_stage = 0;
-static uint8_t loading_overlay_active = 0;
 static uint8_t loaded_bitmap_scene_id = 0xFFu;
 
 /* Forward declaration for debug logging helper used before write_text definition. */
@@ -167,22 +166,7 @@ static void clear_bitmap(void)
 }
 
 /*
- * Purpose: Clear only the image area (rows 0-13) without touching description/options (rows 14-24).
- * Inputs: none.
- * Returns: nothing.
- */
-static void clear_bitmap_image_area(void)
-{
-    /* Clear only rows 0-13, leave rows 14-24 (story + options area) intact. */
-    uint16_t i;
-    uint16_t image_bytes = (uint16_t)DESC_ROW_START * BITMAP_ROW_STRIDE;
-    for (i = 0; i < image_bytes; ++i) {
-        BITMAP_RAM[i] = 0x00;
-    }
-}
-
-/*
- * Purpose: Initialize per-cell bitmap color memory.
+ * Purpose: Configure VIC-II registers for hires bitmap mode.
  * Inputs: none.
  * Returns: nothing.
  */
@@ -458,27 +442,6 @@ static void draw_top_fallback(void)
 }
 
 /*
- * Purpose: Show a full-screen green transition with loading text.
- * Inputs: none.
- * Returns: nothing.
- */
-static void show_loading_overlay(void)
-{
-    uint8_t row;
-    uint8_t col;
-
-    clear_bitmap();
-    for (row = 0; row < SCREEN_H; ++row) {
-        for (col = 0; col < SCREEN_W; ++col) {
-            set_bitmap_cell_color(row, col, COLOR_GREEN, COLOR_GREEN);
-        }
-    }
-
-    write_text(0, 0, "LOADING...", COLOR_YELLOW);
-    loading_overlay_active = 1;
-}
-
-/*
  * Purpose: Open compressed scene pack file on one device for reading.
  * Inputs: device number.
  * Returns: 1 on success, 0 on failure.
@@ -645,7 +608,7 @@ static uint8_t load_bitmap_from_pack_device(uint8_t scene_id, uint8_t device)
         --scene_offset;
     }
 
-    clear_bitmap_image_area();
+    /* Draw new image directly on top of the existing one — no blanking. */
     while (written < raw_size && packed_consumed < packed_size) {
         uint16_t run_len;
 
@@ -774,23 +737,26 @@ static void clear_description_area(void)
 }
 
 /*
- * Purpose: Draw story-only bottom section during scene loading.
+ * Purpose: Clear story + options area (rows 14-24) for scene transition.
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void clear_story_area(void)
+{
+    uint8_t row;
+    for (row = DESC_ROW_START; row < SCREEN_H; ++row) {
+        clear_line(row, COLOR_WHITE);
+    }
+}
+
+/*
+ * Purpose: Draw new scene story text + PLEASE WAIT in the cleared story area.
  * Inputs: scene pointer.
  * Returns: nothing.
  */
 static void draw_scene_loading_phase(const StoryScene* scene)
 {
-    uint8_t row;
-
-    if (loading_overlay_active) {
-        apply_monochrome_palette();
-        clear_line(0, COLOR_WHITE);
-        loading_overlay_active = 0;
-    }
-
-    for (row = BOTTOM_START; row < SCREEN_H; ++row) {
-        clear_line(row, COLOR_WHITE);
-    }
+    clear_story_area();
 
     write_text(13, 0, "SCENE:", COLOR_YELLOW);
     write_text(13, 7, scene->title, COLOR_YELLOW);
@@ -973,7 +939,6 @@ int main(void)
                 if (choice < scene->option_count && choice < OPTION_ROWS) {
                     const StoryOption* option = &STORY_OPTIONS[scene->first_option + choice];
                     uint8_t next_scene_id = resolve_target(option, flags);
-                    show_loading_overlay();
                     scene_index = find_scene_index(next_scene_id);
                     break;
                 }
