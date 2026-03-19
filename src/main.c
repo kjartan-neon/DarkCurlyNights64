@@ -54,6 +54,8 @@
 
 /* Debug marker shown as border color + top-left character while booting. */
 static volatile uint8_t debug_stage = 0;
+static uint8_t loading_overlay_active = 0;
+static uint8_t loaded_bitmap_scene_id = 0xFFu;
 
 /* Forward declaration for debug logging helper used before write_text definition. */
 static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color);
@@ -165,6 +167,21 @@ static void clear_bitmap(void)
 }
 
 /*
+ * Purpose: Clear only the image area (rows 0-13) without touching description/options (rows 14-24).
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void clear_bitmap_image_area(void)
+{
+    /* Clear only rows 0-13, leave rows 14-24 (story + options area) intact. */
+    uint16_t i;
+    uint16_t image_bytes = (uint16_t)DESC_ROW_START * BITMAP_ROW_STRIDE;
+    for (i = 0; i < image_bytes; ++i) {
+        BITMAP_RAM[i] = 0x00;
+    }
+}
+
+/*
  * Purpose: Initialize per-cell bitmap color memory.
  * Inputs: none.
  * Returns: nothing.
@@ -259,26 +276,23 @@ static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color
 }
 
 /*
- * Purpose: Word-wrap and optionally draw one page of description text.
- * Inputs: text buffer, start index, draw flag (0=measure, 1=draw).
+ * Purpose: Word-wrap and optionally draw one page inside custom row bounds.
+ * Inputs: text buffer, start index, draw flag, row start/count, more-marker flag.
  * Returns: index of next unread character (next page start).
  */
-static uint16_t render_description_page(const char* text, uint16_t start, uint8_t draw)
+static uint16_t render_description_page_rows(const char* text, uint16_t start, uint8_t draw, uint8_t row_start, uint8_t row_count, uint8_t show_more_marker)
 {
-    /*
-     * Word-wrap description text into the fixed description area.
-     * Returns index of next unread character (for multi-page descriptions).
-     */
-    uint8_t current_row = DESC_ROW_START;
+    uint8_t current_row = row_start;
     uint8_t col = 0;
     uint16_t idx = start;
     uint8_t has_more = 0;
+    uint8_t row_limit = (uint8_t)(row_start + row_count);
 
     while (text[idx] == ' ') {
         ++idx;
     }
 
-    while (text[idx] != '\0' && current_row < (uint8_t)(DESC_ROW_START + DESC_ROWS)) {
+    while (text[idx] != '\0' && current_row < row_limit) {
         uint16_t word_start = idx;
         uint8_t word_len = 0;
 
@@ -302,7 +316,7 @@ static uint16_t render_description_page(const char* text, uint16_t start, uint8_
             continue;
         }
 
-        if (current_row >= (uint8_t)(DESC_ROW_START + DESC_ROWS)) {
+        if (current_row >= row_limit) {
             has_more = 1;
             idx = word_start;
             break;
@@ -334,12 +348,22 @@ static uint16_t render_description_page(const char* text, uint16_t start, uint8_
         ++idx;
     }
 
-    if (has_more && draw) {
-        uint8_t last_row = (uint8_t)(DESC_ROW_START + DESC_ROWS - 1);
+    if (has_more && draw && show_more_marker && row_count > 0u) {
+        uint8_t last_row = (uint8_t)(row_start + row_count - 1u);
         write_text(last_row, 37, "(...)", COLOR_CYAN);
     }
 
     return idx;
+}
+
+/*
+ * Purpose: Word-wrap and optionally draw one page of description text.
+ * Inputs: text buffer, start index, draw flag (0=measure, 1=draw).
+ * Returns: index of next unread character (next page start).
+ */
+static uint16_t render_description_page(const char* text, uint16_t start, uint8_t draw)
+{
+    return render_description_page_rows(text, start, draw, DESC_ROW_START, DESC_ROWS, 1);
 }
 
 /*
@@ -431,6 +455,27 @@ static void draw_top_fallback(void)
             set_bitmap_cell_color(row, col, shade, COLOR_BLACK);
         }
     }
+}
+
+/*
+ * Purpose: Show a full-screen green transition with loading text.
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void show_loading_overlay(void)
+{
+    uint8_t row;
+    uint8_t col;
+
+    clear_bitmap();
+    for (row = 0; row < SCREEN_H; ++row) {
+        for (col = 0; col < SCREEN_W; ++col) {
+            set_bitmap_cell_color(row, col, COLOR_GREEN, COLOR_GREEN);
+        }
+    }
+
+    write_text(0, 0, "LOADING...", COLOR_YELLOW);
+    loading_overlay_active = 1;
 }
 
 /*
@@ -600,7 +645,7 @@ static uint8_t load_bitmap_from_pack_device(uint8_t scene_id, uint8_t device)
         --scene_offset;
     }
 
-    clear_bitmap();
+    clear_bitmap_image_area();
     while (written < raw_size && packed_consumed < packed_size) {
         uint16_t run_len;
 
@@ -729,26 +774,40 @@ static void clear_description_area(void)
 }
 
 /*
- * Purpose: Draw complete scene frame (image + title + text + options).
- * Inputs: scene pointer, page start index, page index, total pages.
+ * Purpose: Draw story-only bottom section during scene loading.
+ * Inputs: scene pointer.
  * Returns: nothing.
  */
-static void draw_scene(const StoryScene* scene, uint16_t page_start, uint8_t page_index, uint8_t page_count)
+static void draw_scene_loading_phase(const StoryScene* scene)
 {
-    /* Render one full frame for the current scene and description page. */
     uint8_t row;
+
+    if (loading_overlay_active) {
+        apply_monochrome_palette();
+        clear_line(0, COLOR_WHITE);
+        loading_overlay_active = 0;
+    }
 
     for (row = BOTTOM_START; row < SCREEN_H; ++row) {
         clear_line(row, COLOR_WHITE);
     }
 
-    /* Load the correct bitmap for this scene. */
-    if (!load_bitmap_for_scene(scene->id)) {
-        write_text(0, 0, "BITMAP LOAD FAILED", COLOR_LIGHTRED);
-    }
+    write_text(13, 0, "SCENE:", COLOR_YELLOW);
+    write_text(13, 7, scene->title, COLOR_YELLOW);
 
-    clear_description_area();
+    render_description_page_rows(scene->description, 0, 1, DESC_ROW_START, (uint8_t)(DESC_ROWS + OPTION_ROWS), 0);
+    write_text(24, 0, "PLEASE WAIT. LOADING IMAGE...", COLOR_CYAN);
+}
 
+/*
+ * Purpose: Draw just the story text and title (without clearing the options area).
+ * Inputs: scene pointer, page start index, page index, total pages.
+ * Returns: nothing.
+ */
+static void draw_scene_story_only(const StoryScene* scene, uint16_t page_start, uint8_t page_index, uint8_t page_count)
+{
+    /* Render story title and text, preserving the options area below.
+     * Do not clear here; just redraw to preserve text through image load. */
     write_text(13, 0, "SCENE:", COLOR_YELLOW);
     write_text(13, 7, scene->title, COLOR_YELLOW);
 
@@ -759,6 +818,20 @@ static void draw_scene(const StoryScene* scene, uint16_t page_start, uint8_t pag
         page_buf[3] = (char)('1' + page_index);
         page_buf[5] = (char)('0' + page_count);
         write_text(13, 33, page_buf, COLOR_CYAN);
+    }
+}
+
+/*
+ * Purpose: Draw options and footer for the current scene.
+ * Inputs: scene pointer, page index, total pages.
+ * Returns: nothing.
+ */
+static void draw_scene_options(const StoryScene* scene, uint8_t page_index, uint8_t page_count)
+{
+    /* Clear only the options area. */
+    uint8_t row;
+    for (row = OPTION_ROW_START; row < SCREEN_H; ++row) {
+        clear_line(row, COLOR_WHITE);
     }
 
     if (scene->option_count == 0) {
@@ -814,7 +887,10 @@ int main(void)
 
     /* Load initial bitmap (scene 1). */
     if (!load_bitmap_for_scene(1)) {
+        loaded_bitmap_scene_id = 0xFFu;
         draw_top_fallback();
+    } else {
+        loaded_bitmap_scene_id = 1u;
     }
     set_debug_marker('G', COLOR_GREEN);
 
@@ -831,6 +907,7 @@ int main(void)
         uint16_t desc_pages[MAX_DESC_PAGES];
         uint8_t desc_page_count;
         uint8_t desc_page = 0;
+        uint8_t scene_ready = 0;
 
         flags |= scene->grants_flags;
         desc_page_count = compute_description_pages(scene->description, desc_pages);
@@ -838,8 +915,28 @@ int main(void)
         for (;;) {
             uint8_t key;
 
-            /* Draw current scene and current description page. */
-            draw_scene(scene, desc_pages[desc_page], desc_page, desc_page_count);
+            if (!scene_ready) {
+                draw_scene_loading_phase(scene);
+
+                if (loaded_bitmap_scene_id != scene->id) {
+                    if (!load_bitmap_for_scene(scene->id)) {
+                        write_text(0, 0, "BITMAP LOAD FAILED", COLOR_LIGHTRED);
+                    } else {
+                        loaded_bitmap_scene_id = scene->id;
+                    }
+                }
+
+                draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);
+                draw_scene_options(scene, desc_page, desc_page_count);
+                scene_ready = 1;
+
+                while (cbm_k_getin() != 0) {
+                }
+            } else {
+                /* Redraw story and options on SPACE (page turn). */
+                draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);
+                draw_scene_options(scene, desc_page, desc_page_count);
+            }
 
             /* Blocking input wait: keep polling until user presses a key. */
             do {
@@ -855,6 +952,7 @@ int main(void)
             if (key == ' ') {
                 if (desc_page_count > 1) {
                     desc_page = (uint8_t)((desc_page + 1) % desc_page_count);
+                    clear_description_area();
                 }
                 continue;
             }
@@ -875,6 +973,7 @@ int main(void)
                 if (choice < scene->option_count && choice < OPTION_ROWS) {
                     const StoryOption* option = &STORY_OPTIONS[scene->first_option + choice];
                     uint8_t next_scene_id = resolve_target(option, flags);
+                    show_loading_overlay();
                     scene_index = find_scene_index(next_scene_id);
                     break;
                 }
