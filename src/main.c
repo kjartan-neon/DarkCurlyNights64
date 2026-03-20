@@ -558,7 +558,7 @@ static void clear_description_area(void)
 static void clear_story_area(void)
 {
     uint8_t row;
-    for (row = DESC_ROW_START; row < SCREEN_H; ++row) {
+    for (row = DESC_ROW_START-1; row < SCREEN_H; ++row) {
         clear_line(row, COLOR_WHITE);
     }
 }
@@ -599,7 +599,7 @@ static void draw_scene_options(const StoryScene* scene, uint8_t page_index, uint
     }
 
     if (scene->option_count == 0) {
-        write_text(23, 0, "END OF PART 1. ELARA WAITS FOR YOU I PART 2", COLOR_LIGHTRED);
+        write_text(23, 0, "THE END.ELARA WAITS FOR YOU IN PART 2", COLOR_LIGHTRED);
         write_text(24, 0, "Q: QUIT R: RESTART", COLOR_CYAN);
         return;
     }
@@ -613,7 +613,7 @@ static void draw_scene_options(const StoryScene* scene, uint8_t page_index, uint
 
             option_number[0] = (char)('1' + i);
             write_text(row_opt, 0, option_number, COLOR_GREEN);
-            write_text(row_opt, 3, option->text, COLOR_GREEN);
+            write_text(row_opt, 3, option->text, COLOR_WHITE);
         }
     }
 }
