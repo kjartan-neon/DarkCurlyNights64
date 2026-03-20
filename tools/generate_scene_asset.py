@@ -36,9 +36,40 @@ def discover_scenes(images_dir: Path) -> list[dict]:
 
 
 def prepare_c64_image(image: Image.Image) -> Image.Image:
-    """Create a full-width 1-bit C64 working image at 320x100 pixels."""
+    """Create a full-width 1-bit C64 working image at 320x100 pixels.
+
+    This version keeps the full input width and only crops top/bottom to match
+    the C64 display aspect (320x200 = 1.6), then renders at half height to
+    compensate for C64 pixel shape.
+    """
+    # Step 1: Convert to grayscale for predictable thresholding/dithering.
     grayscale = image.convert("L")
-    resized = grayscale.resize((RENDER_WIDTH, RENDER_HEIGHT), Image.Resampling.LANCZOS)
+
+    # Step 2: Read source dimensions.
+    source_width, source_height = grayscale.size
+
+    # Step 3: Compute the target display aspect ratio for C64 fullscreen.
+    # We target 320x200 display space first; half-height rendering is done later.
+    target_display_aspect = OUTPUT_WIDTH / OUTPUT_HEIGHT
+
+    # Step 4: Keep full width; compute height needed to match target aspect.
+    target_crop_height = int(round(source_width / target_display_aspect))
+
+    # Step 5: Crop only top and bottom (centered vertically).
+    # If the source is already shorter than target_crop_height, we cannot crop;
+    # in that case we keep full height and continue.
+    if source_height > target_crop_height:
+        crop_top = (source_height - target_crop_height) // 2
+        crop_bottom = crop_top + target_crop_height
+        aspect_crop = grayscale.crop((0, crop_top, source_width, crop_bottom))
+    else:
+        aspect_crop = grayscale
+
+    # Step 6: Resize to C64 working render size (320x100).
+    # 320x100 is intentional: C64 pixels are non-square, so this displays as ~320x200.
+    resized = aspect_crop.resize((RENDER_WIDTH, RENDER_HEIGHT), Image.Resampling.LANCZOS)
+
+    # Step 7: Convert to 1-bit with dithering for bitmap export.
     return resized.convert("1", dither=Image.Dither.FLOYDSTEINBERG)
 
 
