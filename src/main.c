@@ -599,8 +599,8 @@ static void draw_scene_options(const StoryScene* scene, uint8_t page_index, uint
     }
 
     if (scene->option_count == 0) {
-        write_text(24, 0, "END OF PART ONE", COLOR_LIGHTRED);
-        write_text(25, 0, "SPACE: NEXT PAGE  R: RESTART", COLOR_CYAN);
+        write_text(23, 0, "END OF PART 1. ELARA WAITS FOR YOU I PART 2", COLOR_LIGHTRED);
+        write_text(24, 0, "Q: QUIT R: RESTART", COLOR_CYAN);
         return;
     }
 
@@ -661,7 +661,7 @@ int main(void)
     apply_monochrome_palette();
     set_debug_marker('P', COLOR_WHITE);
 
-    write_text(0, 0, "FILE MODE: 01-30", COLOR_LIGHTGREEN);
+    write_text(23, 0, "FILE MODE: 01-30", COLOR_LIGHTGREEN);
     set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */
@@ -720,6 +720,14 @@ int main(void)
                     clear_description_area();
                 }
                 continue;
+            }
+
+            /* N advances to the next scene in STORY_SCENES order. */
+            if (key == 'n' || key == 'N') {
+                if ((uint8_t)(scene_index + 1u) < STORY_SCENE_COUNT) {
+                    scene_index = (uint8_t)(scene_index + 1u);
+                }
+                break;
             }
 
             /* End scenes have no options; only restart is accepted. */
