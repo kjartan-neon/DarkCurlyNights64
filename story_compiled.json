@@ -291,11 +291,11 @@
         },
         {
           "letter": "B",
-          "text": "Ask what happened to the Norway?",
+          "text": "Ask what happened to Norway?",
           "target_scene": 13,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Ask what happened to the Norway? (Go to SCENE 13)"
+          "raw": "Ask what happened to Norway? (Go to SCENE 13)"
         }
       ]
     },
@@ -374,7 +374,7 @@
     {
       "id": 16,
       "title": "THE AI CORE",
-      "description": "The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. \"The weather is worse, and still too cold outside. The core needs new parameters.\"",
+      "description": "The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. \"The weather is worse, and still too cold outside. The core needs a new algorithm.\"",
       "grants": [],
       "options": [
         {
@@ -432,7 +432,7 @@
     {
       "id": 19,
       "title": "ASSIGNMENT",
-      "description": "You can log in. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.",
+      "description": "You log in to the terminal. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER ALGORITHM, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.",
       "grants": [],
       "options": [
         {
@@ -477,11 +477,11 @@
       "options": [
         {
           "letter": "A",
-          "text": "Share your secret stash of pre-collapse coffee",
+          "text": "Share your secret stash of coffee",
           "target_scene": 22,
           "alt_target_scene": null,
           "condition": "has_coffee",
-          "raw": "Share your secret stash of pre-collapse coffee. (Go to SCENE 22.)"
+          "raw": "Share your secret stash of coffee. (Go to SCENE 22.)"
         },
         {
           "letter": "B",
@@ -671,11 +671,11 @@
         },
         {
           "letter": "B",
-          "text": "Acceptance. Make the most of your final days",
+          "text": "Acceptance. Make the most of ur days",
           "target_scene": 30,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Acceptance. Make the most of your final days. (Go to SCENE 30)"
+          "raw": "Acceptance. Make the most of ur days. (Go to SCENE 30)"
         }
       ]
     },

@@ -63,7 +63,7 @@ SCENE 12: THE TRUTH OF AETHELRED
 Description:
 Elara leads you to an observation deck. She punches a command. The blast shutters open. You are on an enormous oil platform. The ocean below is pure ice. Elara looks out. "The government? They died in Oslo. But Project AETHELRED survived." 
  * Option A: Ask about the state of the world. (Go to SCENE 13)
- * Option B: Ask what happened to the Norway? (Go to SCENE 13)
+ * Option B: Ask what happened to Norway? (Go to SCENE 13)
 SCENE 13: THE HISTORY LESSON
 Description:
  It was after the Iranian war. The burning oil refinery and the dirty nuclear bombs. It all collapsed in 2028. But these ocean platforms was secretly rebuilt for a new ice age. Now we are all that is left."
@@ -81,7 +81,7 @@ Description:
  * Option C: Code: 2028. (Go to SCENE 16)
 SCENE 16: THE AI CORE
 Description:
-The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. "The weather is worse, and still too cold outside. The core needs new parameters."
+The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. "The weather is worse, and still too cold outside. The core needs a new algorithm."
  * Option A: Offer to help with the core's diagnostics. (Go to SCENE 17.)
  * Option B: She knows what to do. Watch her work from a distance. (Go to SCENE 18)
 SCENE 17: TECHNICAL BOND
@@ -94,7 +94,7 @@ You stand back. Elara works with efficient, practiced movements. But the core do
  * Option A: Help Elara (GO to SCENE 17)
 SCENE 19: ASSIGNMENT
 Description:
-You can log in. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.
+You log in to the terminal. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER ALGORITHM, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.
  * Option A: Accept assignment. (Go to SCENE 20)
 SCENE 20: SHARED SECTOR
 Description:
@@ -104,7 +104,7 @@ The Fusion Terminal is located in Sector 7—the same sector Elara maintains. Ov
 SCENE 21: THE OBSERVATION DECK
 Description:
 During your scarce downtime, you meet her on the Observation Deck. She talks about how she used to dream of the blue sky. You share your own memories of the world before the ice and grey clouds. You remember your private stuff in storage.
- * Option A: Share your secret stash of pre-collapse coffee. (Go to SCENE 22.)
+ * Option A: Share your secret stash of coffee. (Go to SCENE 22.)
  * Option B: Ask her if she resents you. (Go to SCENE 23)
 SCENE 22: COFFEE AND COMPLICITY
 Description:
@@ -144,7 +144,7 @@ SCENE 29: SABOTAGE (A CHANCE?)
 Description:
 "If you stay," Elara whispers, "we will have to hide from the AI supervision, or else you will be forced into stasis. And another leader will be woken."
  * Option A: Attempt to hide from the AI. (Go to SCENE 24)
- * Option B: Acceptance. Make the most of your final days. (Go to SCENE 30)
+ * Option B: Acceptance. Make the most of ur days. (Go to SCENE 30)
 SCENE 30: THE DEEP FREEZE
 Description:
 The final hour. You are standing outside your stasis pod. Elara stands beside you. "I’ll be here when you wake up," she promises. The visor closes. The thick green gel begins to fill the chamber. Her face is blurred by the rising fluid. "I love you!"
