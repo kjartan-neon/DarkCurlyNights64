@@ -665,91 +665,221 @@ int main(void)
     set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */
+    /* =====================================================================
+     * MAIN GAME LOOP - OUTER LOOP
+     * =====================================================================
+     * This outer loop runs for each scene the player visits.
+     * Each iteration sets up all the data needed for one full scene:
+     *   - Which scene to display
+     *   - Where the description text breaks across pages
+     *   - What story flags this scene grants
+     *
+     * After setup, the inner loop handles rendering and user input for
+     * this scene. When the player makes a choice, the inner loop breaks
+     * and this outer loop loads the next scene.
+     * ===================================================================== */
     for (;;) {
         set_debug_marker('O', COLOR_LIGHTGREEN);
+
+        /* --- SCENE DATA SETUP ------------------------------------------ */
+
+        /* Point to the current scene in the global STORY_SCENES array.
+         * scene_index tracks which scene we're showing (0-based). */
         const StoryScene* scene = &STORY_SCENES[scene_index];
+
+        /* Pre-compute where each page of the description text breaks.
+         * desc_pages[i] = byte offset into scene->description where page i starts.
+         * For example: page 0 starts at desc_pages[0], page 1 at desc_pages[1], etc. */
         uint16_t desc_pages[MAX_DESC_PAGES];
         uint8_t desc_page_count;
+
+        /* Start showing the first page of the description. */
         uint8_t desc_page = 0;
+
+        /* Flag: has this scene's rendering been completed (title + desc + options + bitmap)?
+         * Used to distinguish first-render (slow, loads bitmap) from re-renders (fast, same bitmap). */
         uint8_t scene_ready = 0;
 
+        /* Apply any permanent story flags this scene grants to the player
+         * (e.g., player collected an item, discovered a plot point).
+         * These persist even if the player visits other scenes later. */
         flags |= scene->grants_flags;
+
+        /* Scan the description text to find all page breaks.
+         * This tells us how many pages of description exist for this scene.
+         * (Pagination allows text longer than 7 rows to be shown one page at a time.) */
         desc_page_count = compute_description_pages(scene->description, desc_pages);
 
+        /* ===================================================================
+         * INNER LOOP - RENDER & INPUT LOOP FOR THIS SCENE
+         * ===================================================================
+         * This inner loop handles all rendering and input for one scene.
+         * It loops when the player presses SPACE (page turn within the scene).
+         * It breaks when the player makes a story choice or presses N/R/Q. */
         for (;;) {
             uint8_t key;
 
+            /* --- RENDERING PHASE ---------------------------------------- */
+
+            /* First-time rendering of this scene?
+             * (or re-rendering after pressing a key, e.g., SPACE for page-turn) */
             if (!scene_ready) {
+
+                /* Check: is the bitmap in VRAM stale (from a different scene)?
+                 * If so, we need to load the new scene's image from disk.
+                 * If not (same scene, or pre-loaded at startup), skip the disk load. */
                 if (loaded_bitmap_scene_id != scene->id) {
-                    /* Clear story area and show title/text while image streams in. */
+
+                    /* Step 1: CLEAR THE SCREEN
+                     * Erase rows 13-24 (title + description + options area).
+                     * The image (rows 0-12) stays intact from before. */
                     clear_story_area();
+
+                    /* Step 2: WRITE THE SCENE TITLE
+                     * Place "SCENE:" label and the scene name on row 13 (yellow text). */
                     write_text(13, 0, "SCENE:", COLOR_YELLOW);
                     write_text(13, 7, scene->title, COLOR_YELLOW);
+
+                    /* Step 3: WRITE THE DESCRIPTION (EXTENDED)
+                     * Write the description text now, while the bitmap streams in (slow).
+                     * Use DESC_ROWS + OPTION_ROWS (7 + 3 = 10 rows total, rows 14-23)
+                     * so the text fills the screen and stays visible during disk I/O.
+                     * Don't show the "(...)" more-marker (show_more_marker=0) because
+                     * we deliberately overflow into the options area during load. */
                     render_description_page_rows(scene->description, 0, 1, DESC_ROW_START, (uint8_t)(DESC_ROWS + OPTION_ROWS), 0);
 
+                    /* Step 4: LOAD THE BITMAP FROM DISK
+                     * This is the SLOW part — IEC bus transfers ~2 KB of bitmap data.
+                     * While the load happens, the title and description written above
+                     * remain visible to the user, so it doesn't feel like a hang. */
                     if (!load_bitmap_for_scene(scene->id)) {
+                        /* Error case: bitmap file not found or load failed.
+                         * Display an error message in red at the top. */
                         write_text(0, 0, "BITMAP LOAD FAILED", COLOR_LIGHTRED);
                     } else {
+                        /* Success: bitmap is now in VRAM.
+                         * Record this so we don't re-load if the player re-enters the scene. */
                         loaded_bitmap_scene_id = scene->id;
                     }
                 }
+                /* End of: if (loaded_bitmap_scene_id != scene->id) */
 
+                /* Step 5: REDRAW STORY TEXT (BOUNDED)
+                 * The description was written above spanning DESC_ROWS + OPTION_ROWS.
+                 * Now redraw it properly bounded to just DESC_ROWS (7 rows, 14-20).
+                 * This ensures the text respects pagination and shows the "(...)"-marker
+                 * if the description is longer than one page. */
                 draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);
+
+                /* Step 6: DRAW THE OPTIONS
+                 * Clear rows 21-24 (the options area) and stamp the numbered choices.
+                 * This replaces the overflowed description text (from Step 3) with
+                 * the actual numbered options the player can pick. */
                 draw_scene_options(scene, desc_page, desc_page_count);
+
+                /* Mark this scene as fully rendered and ready for input.
+                 * Next time through the inner loop (if SPACE is pressed for page-turn),
+                 * we'll skip the bitmap load and just redraw the story text for the
+                 * next page. */
                 scene_ready = 1;
+
             } else {
-                /* Redraw story and options on SPACE (page turn). */
+                /* Re-render path: scene_ready == 1
+                 * This happens after the player presses SPACE to turn to the next page.
+                 * We already have the bitmap in VRAM, so just redraw the story and options. */
                 draw_scene_story_only(scene, desc_pages[desc_page], desc_page, desc_page_count);
                 draw_scene_options(scene, desc_page, desc_page_count);
             }
+            /* End of: if (!scene_ready) ... else */
 
-            /* Blocking input wait: keep polling until user presses a key. */
+            /* --- INPUT PHASE -------------------------------------------- */
+
+            /* WAIT FOR USER INPUT
+             * Loop until a key is pressed. On real C64 hardware this spins the CPU;
+             * on VICE it yields to the host OS. */
             do {
                 key = cbm_k_getin();
             } while (key == 0);
 
-            /* Q quits immediately. */
+            /* INPUT DISPATCH: handle different keys */
+
+            /* Q or q: QUIT GAME
+             * Exit immediately. */
             if (key == 'q' || key == 'Q') {
                 return 0;
             }
 
-            /* SPACE cycles long descriptions page-by-page. */
+            /* SPACE: PAGE TURN (for long descriptions)
+             * If the description spans multiple pages, advance to the next page.
+             * Clear the description area and re-enter the inner loop (scene_ready still 1).
+             * The "if (!scene_ready)" branch will be false, so we'll use the else-branch
+             * to quickly redraw with the new page index. */
             if (key == ' ') {
                 if (desc_page_count > 1) {
+                    /* Advance page counter, wrapping around to 0 if at the end. */
                     desc_page = (uint8_t)((desc_page + 1) % desc_page_count);
+                    /* Clear the description area (rows 14-20) before redrawing. */
                     clear_description_area();
                 }
+                /* Re-enter the inner loop to redraw the new page. */
                 continue;
             }
 
-            /* N advances to the next scene in STORY_SCENES order. */
+            /* N or n: NEXT SCENE (debug/cheat key)
+             * Skip forward to the next scene in story order.
+             * Clamps at the last scene if already there. */
             if (key == 'n' || key == 'N') {
                 if ((uint8_t)(scene_index + 1u) < STORY_SCENE_COUNT) {
                     scene_index = (uint8_t)(scene_index + 1u);
                 }
+                /* Break the inner loop: the outer loop will load the new scene. */
                 break;
             }
 
-            /* End scenes have no options; only restart is accepted. */
+            /* END-OF-STORY SCENES (no options)
+             * If this scene has no branching options, only R (restart) is valid.
+             * Any other key loops back to the input wait. */
             if (scene->option_count == 0) {
                 if (key == 'r' || key == 'R') {
+                    /* Restart: jump back to scene 0 and clear all flags. */
                     scene_index = 0;
                     flags = 0;
+                    /* Break the inner loop to load scene 0. */
                     break;
                 }
+                /* Any other key: just loop back to the input wait. */
                 continue;
             }
 
-            /* Number keys 1..9 pick an option and jump to target scene. */
+            /* NUMBER KEYS 1-9: PICK A STORY OPTION
+             * Player presses 1-9 to select which option to follow.
+             * This determines which scene they jump to next. */
             if (key >= '1' && key <= '9') {
+                /* Convert '1' → index 0, '2' → index 1, etc. */
                 uint8_t choice = (uint8_t)(key - '1');
+
+                /* Bounds check: option must exist for this scene AND fit on screen. */
                 if (choice < scene->option_count && choice < OPTION_ROWS) {
+                    /* Get the option struct from the global STORY_OPTIONS array. */
                     const StoryOption* option = &STORY_OPTIONS[scene->first_option + choice];
+
+                    /* CONDITIONAL BRANCHING
+                     * Check if this option has a condition (e.g., "only pick this if you have the multitool").
+                     * If the condition fails, jump to the alt_target_scene instead. */
                     uint8_t next_scene_id = resolve_target(option, flags);
+
+                    /* Convert scene ID to an index in the STORY_SCENES array. */
                     scene_index = find_scene_index(next_scene_id);
+
+                    /* Break the inner loop: the outer loop will load the new scene. */
                     break;
                 }
+                /* If the choice is out of bounds, just ignore it and loop back to input wait. */
             }
+
+            /* Any unrecognized key: loop back to input wait (fall through). */
         }
+        /* End of: for (;;) inner loop */
     }
+    /* End of: for (;;) outer loop (never reached; loop is infinite). */
 }
