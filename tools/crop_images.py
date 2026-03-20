@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Crop scene source images for the C64 pipeline.
+"""Prepare scene source images for the C64 pipeline.
 
 Workflow stage 1:
 - Input: `gfx/originals/sceneNN.png`
-- Output: `gfx/images/sceneNN.png` (center-cropped 345x212)
+- Output: `gfx/images/sceneNN.png` (345x212)
+
+Design goal:
+- Keep the full horizontal content (no left/right crop).
+- Only adjust vertically (crop or pad top/bottom) after width-fit.
 """
 
 import sys
@@ -12,60 +16,63 @@ from PIL import Image
 
 
 TARGET_WIDTH = 345
-TARGET_HEIGHT = 212
+TARGET_HEIGHT = 145
 TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT
-INSET_FRACTION = 0.10
 
 
-def resize_and_center_crop(image_path: str, output_path: str) -> None:
+def prepare_scene_image(image_path: str, output_path: str) -> None:
     """
-    Resize an image to fill the target area, then center-crop to 345x212.
+    Convert one source scene image to the fixed working size (345x212).
+
+    Steps:
+    1) Load source image.
+    2) Resize to target width while preserving original aspect ratio.
+    3) If needed, crop only top/bottom to target height.
+    4) If needed, pad only top/bottom to target height.
+    5) Save to `gfx/images`.
     
     Args:
         image_path: Path to input image in gfx/originals/
-        output_path: Path to save cropped image in gfx/images/
+        output_path: Path to save prepared image in gfx/images/
     """
+    # Step 1: Load image and normalize to RGB mode.
     img = Image.open(image_path).convert("RGB")
     width, height = img.size
 
-    inset_x = int(round(width * INSET_FRACTION))
-    inset_y = int(round(height * INSET_FRACTION))
-    zoom_left = max(0, inset_x)
-    zoom_top = max(0, inset_y)
-    zoom_right = min(width, width - inset_x)
-    zoom_bottom = min(height, height - inset_y)
+    # Step 2: Resize to the target width while preserving aspect ratio.
+    # This guarantees we keep the full left/right content from the source.
+    resized_height = int(round(height * (TARGET_WIDTH / width)))
+    width_fitted = img.resize((TARGET_WIDTH, resized_height), Image.Resampling.LANCZOS)
 
-    if zoom_right <= zoom_left or zoom_bottom <= zoom_top:
-        zoom_left, zoom_top, zoom_right, zoom_bottom = 0, 0, width, height
+    # Step 3: Adjust only vertical framing to reach target height.
+    # If too tall, crop top/bottom (centered). If too short, pad top/bottom.
+    if resized_height > TARGET_HEIGHT:
+        top = (resized_height - TARGET_HEIGHT) // 2
+        bottom = top + TARGET_HEIGHT
+        final_image = width_fitted.crop((0, top, TARGET_WIDTH, bottom))
+        vertical_action = f"crop y={top}:{bottom}"
+    elif resized_height < TARGET_HEIGHT:
+        top_padding = (TARGET_HEIGHT - resized_height) // 2
+        final_image = Image.new("RGB", (TARGET_WIDTH, TARGET_HEIGHT), (0, 0, 0))
+        final_image.paste(width_fitted, (0, top_padding))
+        vertical_action = f"pad top={top_padding}, bottom={TARGET_HEIGHT - resized_height - top_padding}"
+    else:
+        final_image = width_fitted
+        vertical_action = "none"
 
-    zoomed = img.crop((zoom_left, zoom_top, zoom_right, zoom_bottom))
-    zoomed_width, zoomed_height = zoomed.size
-    current_ratio = zoomed_width / zoomed_height
+    # Step 4: Logging for quick tuning and debugging.
+    current_ratio = width / height
     
     print(f"Processing: {Path(image_path).name}")
     print(f"  Original size: {width}x{height}")
-    print(f"  Zoom crop: x={zoom_left}:{zoom_right}, y={zoom_top}:{zoom_bottom} ({zoomed_width}x{zoomed_height})")
-    print(f"  Zoomed ratio: {current_ratio:.2f}")
+    print(f"  Original ratio: {current_ratio:.3f}")
     print(f"  Target size: {TARGET_WIDTH}x{TARGET_HEIGHT} (ratio: {TARGET_RATIO:.2f})")
+    print(f"  Width-fit size: {TARGET_WIDTH}x{resized_height}")
+    print(f"  Vertical adjust: {vertical_action}")
+    print(f"  Output size: {final_image.size[0]}x{final_image.size[1]}")
 
-    if current_ratio < TARGET_RATIO:
-        resized_width = TARGET_WIDTH
-        resized_height = int(round(TARGET_WIDTH / current_ratio))
-    else:
-        resized_height = TARGET_HEIGHT
-        resized_width = int(round(TARGET_HEIGHT * current_ratio))
-
-    resized = zoomed.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
-
-    left = max(0, (resized_width - TARGET_WIDTH) // 2)
-    top = max(0, (resized_height - TARGET_HEIGHT) // 2)
-    crop_box = (left, top, left + TARGET_WIDTH, top + TARGET_HEIGHT)
-
-    cropped = resized.crop(crop_box)
-    print(f"  Resized to: {resized_width}x{resized_height}")
-    print(f"  Output size: {cropped.size[0]}x{cropped.size[1]}")
-
-    cropped.save(output_path)
+    # Step 5: Save prepared image.
+    final_image.save(output_path)
     print(f"  Saved to: {output_path}\n")
 
 
@@ -75,13 +82,14 @@ def main() -> None:
     originals_dir = workspace_root / "gfx" / "originals"
     images_dir = workspace_root / "gfx" / "images"
     
-    # Ensure output directory exists
+    # Ensure output directory exists before writing files.
     images_dir.mkdir(parents=True, exist_ok=True)
     
     if not originals_dir.exists():
         print(f"Error: {originals_dir} does not exist", file=sys.stderr)
         sys.exit(1)
     
+    # Process all files named sceneNN.png.
     image_files = sorted(originals_dir.glob("scene*.png"))
     
     if not image_files:
@@ -93,7 +101,7 @@ def main() -> None:
     for image_file in sorted(image_files):
         try:
             output_file = images_dir / image_file.name
-            resize_and_center_crop(str(image_file), str(output_file))
+            prepare_scene_image(str(image_file), str(output_file))
         except Exception as e:
             print(f"Error processing {image_file.name}: {e}\n", file=sys.stderr)
     

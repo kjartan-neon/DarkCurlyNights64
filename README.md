@@ -1,5 +1,7 @@
 # DarkCurlyNights64
 
+![DarkCurlyNights64 sample](sample.png)
+
 ## Teaser
 
 Wake into freezing gel, cracked glass, and an alarm-lit stasis pod at the bottom of a dead world.
