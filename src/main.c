@@ -581,7 +581,7 @@ static void draw_scene_story_only(const StoryScene* scene, uint16_t page_start, 
         char page_buf[8] = {'P', 'G', ' ', '1', '/', '1', '\0', '\0'};
         page_buf[3] = (char)('1' + page_index);
         page_buf[5] = (char)('0' + page_count);
-        write_text(13, 33, page_buf, COLOR_CYAN);
+        write_text(13, 33, page_buf, COLOR_WHITE);
     }
 }
 

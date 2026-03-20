@@ -91,7 +91,7 @@
     {
       "id": 4,
       "title": "SUBMERGED CORRIDOR",
-      "description": "You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A sealed bulkhead blocks the path.",
+      "description": "You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A bulkhead blocks the path.",
       "grants": [],
       "options": [
         {
@@ -128,18 +128,18 @@
         },
         {
           "letter": "B",
-          "text": "Try to access other crew logs first",
-          "target_scene": 7,
+          "text": "Try to open a bulkhead",
+          "target_scene": 6,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Try to access other crew logs first. (ACCESS DENIED. Go to A.)"
+          "raw": "Try to open a bulkhead. (Go to SCENE 6)"
         }
       ]
     },
     {
       "id": 6,
       "title": "MECHANICAL FAILURE",
-      "description": "You seize the bypass wheel. It's seized with rust. You strain, your weak muscles screaming. With a sharp crack, it gives, but you also hear a hiss of water leaking near the seal.",
+      "description": "You seize the bypass wheel. It's seized with rust. You strain, your weak muscles screaming. With a sharp crack, it gives. You hear a scary sound from the other side.",
       "grants": [],
       "options": [
         {
@@ -152,11 +152,11 @@
         },
         {
           "letter": "B",
-          "text": "Try to seal the leak first",
-          "target_scene": 7,
+          "text": "Go back to the terminal",
+          "target_scene": 5,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Try to seal the leak first. (You lack tools. The leak worsens. Return to A.)"
+          "raw": "Go back to the terminal. (Go to SCENE 5)"
         }
       ]
     },
