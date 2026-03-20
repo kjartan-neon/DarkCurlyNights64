@@ -25,7 +25,7 @@ So anyone can clone/download and launch directly in VICE.
 ## Quick start (play now)
 
 1. Get `build/DarkCurlyNights64.d64` from this repo.
-2. Launch in VICE:
+2. Open .d64 disk in VICE or use this command on Mac:
 
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
