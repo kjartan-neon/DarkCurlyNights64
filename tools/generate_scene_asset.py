@@ -3,7 +3,7 @@
 
 The C64 has non-square pixels (taller than wide, roughly 1:2 aspect ratio).
 To display an image at the correct aspect ratio on screen, we render at half height.
-So for a 320x200 bitmap, we render a centered 184x100 image, which displays correctly.
+So for a 320x200 bitmap, we render a full-width 320x100 image, which displays correctly.
 
 Workflow stage 2:
 - Input: `gfx/images/sceneNN.png` (from `tools/crop_images.py`)
@@ -17,7 +17,7 @@ from PIL import Image
 OUTPUT_WIDTH = 320
 OUTPUT_HEIGHT = 200  # Full bitmap height (25 chars × 8 pixels)
 RENDER_HEIGHT = 100  # But we only render half-height to compensate for C64 pixel aspect ratio
-RENDER_WIDTH = 184   # Narrower image to reduce side content while keeping height fixed
+RENDER_WIDTH = 320   # Use the full visible width; storage size stays the same
 BYTES_PER_ROW = OUTPUT_WIDTH // 8
 BITMAP_BYTES = OUTPUT_HEIGHT * BYTES_PER_ROW
 
@@ -36,21 +36,10 @@ def discover_scenes(images_dir: Path) -> list[dict]:
 
 
 def prepare_c64_image(image: Image.Image) -> Image.Image:
-    """Create a centered 1-bit C64 working image at 320x100 pixels.
-
-    The source is resized to a narrower 184x100 render window and centered on
-    a black 320x100 canvas so the side content is cropped while display height
-    remains exactly 100 pixels on C64.
-    """
+    """Create a full-width 1-bit C64 working image at 320x100 pixels."""
     grayscale = image.convert("L")
     resized = grayscale.resize((RENDER_WIDTH, RENDER_HEIGHT), Image.Resampling.LANCZOS)
-    dithered = resized.convert("1", dither=Image.Dither.FLOYDSTEINBERG)
-
-    # PIL "1" mode uses 0=white, 255=black.
-    canvas = Image.new("1", (OUTPUT_WIDTH, RENDER_HEIGHT), 255)
-    x_offset = (OUTPUT_WIDTH - RENDER_WIDTH) // 2
-    canvas.paste(dithered, (x_offset, 0))
-    return canvas
+    return resized.convert("1", dither=Image.Dither.FLOYDSTEINBERG)
 
 
 def convert_to_bitmap_bytes(c64_image: Image.Image) -> bytes:
@@ -169,7 +158,7 @@ def main() -> None:
         print(f"  Temp C64 image: {output_temp_c64}")
         print(f"  Output asset: {output_root}")
         print(f"  Output header: {output_header}")
-        print(f"  Bitmap display size: {RENDER_WIDTH}x{RENDER_HEIGHT} pixels centered in 320x100")
+        print(f"  Bitmap display size: {RENDER_WIDTH}x{RENDER_HEIGHT} pixels filling 320x100")
         print(f"  Bitmap storage size: 320x200 pixels ({len(bitmap_bytes)} bytes)")
 
 
