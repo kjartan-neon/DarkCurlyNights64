@@ -27,7 +27,7 @@ You stumble into a corridor. The structure groans under immense pressure. Throug
  * Option B: Look for another route. (Go to SCENE 5)
 SCENE 5: CONFIRMED IDENTITY
 Description:
-IDENTITY CONFIRMED: SUBJECT K-81. The screen flashes. A compressed audio log plays: "The Middle East exchange... the thermal bloom... the Gulf Stream has collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to the Core."
+IDENTITY CONFIRMED: SUBJECT K-81. A screen with fingerprint reader next to the exit. An audio log plays: "The Middle East thermal bloom... the Gulf Stream collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to Core."
  * Option A: Take the service elevator up. (Go to SCENE 7)
  * Option B: Try to open a bulkhead. (Go to SCENE 6)
 SCENE 6: MECHANICAL FAILURE
@@ -126,24 +126,24 @@ You meet hidden in maintenance tunnels and the shadows of the fusion core. Your 
  * Option A: The weeks pass... (Go to SCENE 26)
 SCENE 26: MEMORY CHECK II
 Description:
-"STASIS UNSTABLE" AI controlled robots force you to the terminal. The Fusion core needs a reset command based on your stasis rotation pattern.
+"STASIS PROTOCOL UNSTABLE" AI controlled robots force you to the terminal. The pods will die without a reset command based on your stasis rotation pattern.
  * Option A: 5 Years Awake / 1 Year Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)
  * Option B: 1 Year Awake / 5 Years Asleep. (Go to SCENE 27)
  * Option C: 1 Year Awake / 10 Years Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)
 SCENE 27: T-MINUS ONE MONTH
 Description:
-The code is correct. The fusion reactor stabilizes at 100%. A notification flashes: STASIS PROTOCOL INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.
+The code is correct. The other pods stabilizes. A notification flashes: FORCED STASIS INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.
  * Option A: Seek out Elara immediately. (Go to SCENE 28)
  * Option B: Run and kiss Elara. (Go to SCENE 29)
 SCENE 28: IMPOSSIBLE CHOICES
 Description:
 You find Elara in the hidden tunnel. "When you wake up, I will be older, K-81. And you... you will still be you. My whole life will happen while you sleep." "It does not matter."
  * Option A: "I will sabotage my pod. I will stay" (Go to SCENE 29)
- * Option B: "Maybe I can fix it on my next shift" (Go to SCENE 30)
+ * Option B: "Wait for me in my next shift." (Go to SCENE 30)
 SCENE 29: SABOTAGE (A CHANCE?)
 Description:
 "If you stay," Elara whispers, "we will have to hide from the AI supervision, or else you will be forced into stasis. And another leader will be woken."
- * Option A: Attempt to hide from the AI. (Go to SCENE 24)
+ * Option A: Attempt to hide from the AI. (Go to SCENE 26)
  * Option B: Acceptance. Make the most of ur days. (Go to SCENE 30)
 SCENE 30: THE DEEP FREEZE
 Description:
