@@ -1,6 +1,6 @@
 # DarkCurlyNights64
 
-![DarkCurlyNights64 sample](sample.png)
+![DarkCurlyNights64 welcome](welcome.png)
 
 ## Teaser
 
@@ -32,6 +32,8 @@ So anyone can clone/download and launch directly in VICE.
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
 ```
+
+![DarkCurlyNights64 sample](sample.png)
 
 ## Controls
 
