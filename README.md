@@ -33,7 +33,7 @@ So anyone can clone/download and launch directly in VICE.
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
 ```
 
-![Elara sketch](elara-sketch-jpg)
+![Elara sketch](elara-sketch.jpg)
 
 ## Controls
 
