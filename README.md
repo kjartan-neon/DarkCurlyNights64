@@ -9,6 +9,14 @@ The Gulf Stream is gone. Civilization is ice. Deep under the North Sea, the AETH
 
 In this retro interactive cyberpunk drama, you play K-81: a "Leader Class" sleeper awakened for one year of duty before returning to deep freeze. But survival is not the hardest part. Trust, memory, and forbidden love may cost more than the cold ever could.
 
+## Personal note
+
+The project is a way for me to learn more about the computer that started it all for me. Commodore 64. I am not a C programmer by day, but I have written so much code and specifications in my life, that with a little help from my AI friends, I could get my code working. Many decades ago, Kolbjørn Slethei introduced me to the Commodore 64 and basic programming. That sparked i fire, that made my career. My sketches came to life, with the help of Gemeni, and the modern tool chain VS64 made it possible to make this interactive story.
+
+The story is written a while ago, but the current state of the world made me finish it. It is simplified to fit on one disk, but the essence is still there. It was written during some sleepless nights, but Elara represents a hope for the future. I hope you enjoy it, and come back for part 2.
+
+![Elara sketch](elara-sketch.jpg)
+
 ## Story Summary
 
 `DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 narrative.
@@ -32,8 +40,6 @@ So anyone can clone/download and launch directly in VICE.
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
 ```
-
-![Elara sketch](elara-sketch.jpg)
 
 ## Controls
 
