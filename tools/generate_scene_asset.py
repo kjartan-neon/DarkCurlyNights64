@@ -150,6 +150,58 @@ def write_c_header(path: Path, payload: bytes, scene_id: int) -> None:
         handle.write(f"#endif  /* {guard} */\n")
 
 
+def write_named_c_header(path: Path, payload: bytes, guard: str, array_name: str, size_name: str) -> None:
+    """Write bitmap payload as a C header with custom symbol names."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    with path.open("w") as handle:
+        handle.write("/* Auto-generated bitmap header. DO NOT EDIT. */\n")
+        handle.write(f"#ifndef {guard}\n")
+        handle.write(f"#define {guard}\n\n")
+        handle.write("#include <stdint.h>\n\n")
+        handle.write(f"#define {size_name} {len(payload)}\n\n")
+        handle.write(f"static const uint8_t {array_name}[{size_name}] = {{\n")
+
+        for i in range(0, len(payload), 16):
+            chunk = payload[i:i+16]
+            hex_values = ", ".join(f"0x{byte:02X}" for byte in chunk)
+            handle.write(f"    {hex_values},\n")
+
+        handle.write("};\n\n")
+        handle.write(f"#endif  /* {guard} */\n")
+
+
+def process_intro_asset(workspace_root: Path, temp_c64_dir: Path, bmp_dir: Path) -> None:
+    """Optionally convert gfx/intro.png into embedded intro bitmap assets."""
+    input_path = workspace_root / "gfx" / "intro.png"
+
+    if not input_path.exists():
+        print(f"⚠ Intro image not found (skipping): {input_path}")
+        return
+
+    output_root = bmp_dir / "INTRO.BMP"
+    output_build = workspace_root / "build" / "INTRO.BMP"
+    output_header = workspace_root / "src" / "intro_bitmap.h"
+    output_temp_c64 = temp_c64_dir / "intro_c64.png"
+
+    print("Processing Intro image...")
+    image = Image.open(input_path)
+    c64_image = prepare_c64_image(image)
+    write_temp_c64_image(output_temp_c64, c64_image)
+    bitmap_bytes = convert_to_bitmap_bytes(c64_image)
+
+    write_prg_file(output_root, bitmap_bytes)
+    write_prg_file(output_build, bitmap_bytes)
+    write_named_c_header(output_header, bitmap_bytes, "INTRO_BITMAP_H", "INTRO_BITMAP_DATA", "INTRO_BITMAP_SIZE")
+
+    print(f"  Input image: {input_path}")
+    print(f"  Temp C64 image: {output_temp_c64}")
+    print(f"  Output asset: {output_root}")
+    print(f"  Output header: {output_header}")
+    print(f"  Bitmap display size: {RENDER_WIDTH}x{RENDER_HEIGHT} pixels filling 320x100")
+    print(f"  Bitmap storage size: 320x200 pixels ({len(bitmap_bytes)} bytes)")
+
+
 def main() -> None:
     workspace_root = Path(__file__).resolve().parent.parent
     images_dir = workspace_root / "gfx" / "images"
@@ -191,6 +243,8 @@ def main() -> None:
         print(f"  Output header: {output_header}")
         print(f"  Bitmap display size: {RENDER_WIDTH}x{RENDER_HEIGHT} pixels filling 320x100")
         print(f"  Bitmap storage size: 320x200 pixels ({len(bitmap_bytes)} bytes)")
+
+    process_intro_asset(workspace_root, temp_c64_dir, bmp_dir)
 
 
 if __name__ == "__main__":
