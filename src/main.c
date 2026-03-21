@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "generated_story.h"
+#include "intro_bitmap.h"
 
 /*
  * This program runs a small interactive story on the Commodore 64.
@@ -58,6 +59,12 @@ static uint8_t loaded_bitmap_scene_id = 0xFFu;
 
 /* Forward declaration for debug logging helper used before write_text definition. */
 static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color);
+static void clear_line(uint8_t row, uint8_t color);
+static void apply_monochrome_palette(void);
+
+/* Forward declarations for intro screen helpers. */
+static void write_text_centered(uint8_t row, const char* text, uint8_t color);
+static void show_intro_screen(void);
 
 /*
  * Purpose: Show a one-letter boot/debug stage on screen and border.
@@ -157,6 +164,55 @@ static void clear_bitmap(void)
     for (i = 0; i < BITMAP_TOTAL_BYTES; ++i) {
         BITMAP_RAM[i] = 0x00;
     }
+}
+
+/*
+ * Purpose: Draw one line of text centered on a 40-column C64 row.
+ * Inputs: row, string pointer, color.
+ * Returns: nothing.
+ */
+static void write_text_centered(uint8_t row, const char* text, uint8_t color)
+{
+    uint8_t len = (uint8_t)strlen(text);
+    uint8_t col = 0;
+
+    if (len < SCREEN_W) {
+        col = (uint8_t)((SCREEN_W - len) / 2u);
+    }
+
+    write_text(row, col, text, color);
+}
+
+/*
+ * Purpose: Show intro bitmap + centered title lines and wait for SPACE.
+ * Inputs: none.
+ * Returns: nothing.
+ */
+static void show_intro_screen(void)
+{
+    uint8_t key;
+
+    clear_bitmap();
+    memcpy(BITMAP_RAM, INTRO_BITMAP_DATA, INTRO_BITMAP_SIZE);
+    apply_monochrome_palette();
+
+    clear_line(16, COLOR_WHITE);
+    clear_line(17, COLOR_WHITE);
+    clear_line(18, COLOR_WHITE);
+    clear_line(19, COLOR_WHITE);
+    clear_line(20, COLOR_WHITE);
+    clear_line(21, COLOR_WHITE);
+    clear_line(22, COLOR_WHITE);
+    clear_line(23, COLOR_WHITE);
+    clear_line(24, COLOR_WHITE);
+
+    write_text_centered(19, "DARK CURLY NIGHTS PART 1", COLOR_YELLOW);
+    write_text_centered(21, "BY KJARTAN MICHALSEN", COLOR_WHITE);
+    write_text_centered(23, "SPACE TO START", COLOR_CYAN);
+
+    do {
+        key = cbm_k_getin();
+    } while (key != ' ');
 }
 
 /*
@@ -649,6 +705,12 @@ int main(void)
     initialize_bitmap_colors();
     set_debug_marker('I', COLOR_LIGHTBLUE);
 
+    apply_monochrome_palette();
+    set_debug_marker('P', COLOR_WHITE);
+
+    show_intro_screen();
+    set_debug_marker('T', COLOR_CYAN);
+
     /* Load initial bitmap (scene 1). */
     if (!load_bitmap_for_scene(1)) {
         loaded_bitmap_scene_id = 0xFFu;
@@ -658,10 +720,6 @@ int main(void)
     }
     set_debug_marker('G', COLOR_GREEN);
 
-    apply_monochrome_palette();
-    set_debug_marker('P', COLOR_WHITE);
-
-    write_text(23, 0, "FILE MODE: 01-30", COLOR_LIGHTGREEN);
     set_debug_marker('U', COLOR_GREEN);
 
     /* Main game loop: show scene, wait input, transition to next scene. */
