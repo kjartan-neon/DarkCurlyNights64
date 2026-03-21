@@ -24,6 +24,8 @@ You begin disoriented in a malfunctioning pod, uncover the truth of a post-colla
 As you work to stabilize the station and complete memory/code checks, your relationship with Elara, a maintenance worker, turns personal and dangerous.
 The story builds toward a countdown to stasis and a final choice between duty, rebellion, and the little time two people can steal from a frozen future.
 
+![DarkCurlyNights64 sample2](sample2.png)
+
 C64 interactive story prototype built with VS64 + llvm-mos.
 
 This repository includes a ready-to-run disk image at:
@@ -35,7 +37,8 @@ So anyone can clone/download and launch directly in VICE.
 ## Quick start (play now)
 
 1. Get `build/DarkCurlyNights64.d64` from this repo.
-2. Open .d64 disk in VICE or use this command on Mac:
+2. Open .d64 disk in VICE 
+3. ... or use this command on Mac:
 
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
