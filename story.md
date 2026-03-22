@@ -1,5 +1,5 @@
-PROJECT: AETHELRED
-Part One: The Deep Freeze
+PROJECT: Dark Curly Nights 64
+Part One: AETHELRED - The Deep Freeze
 A Cyberpunk/Manga Interactive Odyssey
 SCENE 1: THE COLD AWAKENING
 Description:
