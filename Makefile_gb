@@ -1,0 +1,67 @@
+# =============================================================================
+# Makefile_gb — DarkCurlyNights64 Game Boy Port
+# Toolchain: GBDK-2020  (lcc)
+# Target:    Game Boy DMG (.gb ROM)
+#
+# Usage:
+#   make -f Makefile_gb          # build the ROM
+#   make -f Makefile_gb clean    # remove build artefacts
+#   make -f Makefile_gb assets   # regenerate 2bpp tile headers from PNGs
+# =============================================================================
+
+# --- GBDK-2020 toolchain location ---
+GBDK       := /usr/local/local/lib/gbdk
+LCC        := $(GBDK)/bin/lcc
+
+# --- Project paths ---
+SRC_GB     := src/gb
+SRC_SHARED := src
+OUT_DIR    := build/gb
+
+# --- Source files ---
+SRCS       := $(wildcard $(SRC_GB)/*_gb.c)
+
+# --- Output ROM ---
+ROM        := $(OUT_DIR)/DarkCurlyNights_gb.gb
+
+# --- Compiler / linker flags ---
+# -Wf passes flags to the front end; -Wl passes flags to the linker.
+# -msm83:gb  — target Game Boy (SM83 / LR35902 CPU)
+# -I          — include paths for generated headers
+CFLAGS := \
+	-msm83:gb \
+	-I$(SRC_GB) \
+	-I$(SRC_SHARED) \
+	-I$(GBDK)/include \
+	-Wl-yt0x1B \
+	-autobank \
+	-Wl-j \
+	-Wm-yoA \
+	-Wm-ya4 \
+	-Wb-ext=.rel \
+	-Wb-v
+
+# =============================================================================
+# Build targets
+# =============================================================================
+
+.PHONY: all clean assets
+
+all: $(OUT_DIR) $(ROM)
+
+$(OUT_DIR):
+	mkdir -p $(OUT_DIR)
+
+$(ROM): $(SRCS)
+	$(LCC) $(CFLAGS) -o $@ $^
+	@echo ""
+	@echo "✓ ROM built: $@"
+	@ls -lh $@
+
+clean:
+	rm -rf $(OUT_DIR)
+	@echo "✓ Build artefacts cleaned."
+
+assets:
+	.venv/bin/python tools/generate_gb_asset.py
+	@echo "✓ GB assets regenerated in $(SRC_GB)/"

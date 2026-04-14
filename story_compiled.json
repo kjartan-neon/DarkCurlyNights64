@@ -4,7 +4,6 @@
       "id": 1,
       "title": "THE COLD AWAKENING",
       "description": "Your consciousness returns as a freezing sensation. You are floating in viscous gel. An amber emergency light flickers. You are trapped in a stasis pod. The gel is draining, revealing dim, archaic control panels.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -36,7 +35,6 @@
       "id": 2,
       "title": "EXHUMATION",
       "description": "The pod hiss-pops open. The transition from zero-G gel to heavy artificial gravity is brutal. You collapse onto cold metal grating. The air smells sterile and ancient. You cough up residual fluid, your limbs weak as wet noodles. You are alone in a room.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -60,7 +58,6 @@
       "id": 3,
       "title": "AMBER MESSAGES",
       "description": "The green CRT monitor is cracked but functional. You boot the system. LOG START YEAR 2037: STATION: AETHELRED-HULL 4. CLASS: LEADER. STATUS: EMERGENCY AWAKENING CYCLE. The interface demands confirmation of the last global protocol. You search your hazy memory.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -68,7 +65,7 @@
           "target_scene": 2,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Enter Protocol 'GULF SHIFT'. (WRONG ANSWER. SYSTEM LOCKED. TRY AGAIN FROM SCENE 2.)"
+          "raw": "Enter Protocol 'GULF SHIFT'. (GO TO SCENE 2)"
         },
         {
           "letter": "B",
@@ -84,7 +81,7 @@
           "target_scene": 2,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Enter Protocol 'ATOM FALL'. (WRONG ANSWER. SYSTEM LOCKED. TRY AGAIN FROM SCENE 2.)"
+          "raw": "Enter Protocol 'ATOM FALL'. (GO TO SCENE 2)"
         }
       ]
     },
@@ -92,7 +89,6 @@
       "id": 4,
       "title": "SUBMERGED CORRIDOR",
       "description": "You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A bulkhead blocks the path.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -116,7 +112,6 @@
       "id": 5,
       "title": "CONFIRMED IDENTITY",
       "description": "IDENTITY CONFIRMED: SUBJECT K-81. A screen with fingerprint reader next to the exit. An audio log plays: \"The Middle East thermal bloom... the Gulf Stream collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to Core.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -140,7 +135,6 @@
       "id": 6,
       "title": "MECHANICAL FAILURE",
       "description": "You seize the bypass wheel. It's seized with rust. You strain, your weak muscles screaming. With a sharp crack, it gives. You hear a scary sound from the other side.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -164,7 +158,6 @@
       "id": 7,
       "title": "THE ASCENT",
       "description": "You enter the elevator shaft. The lift is broken. You must climb the emergency ladder. It feels like miles. Your hands blister. The groan of the metal deepens as you ascend toward the distant hum of massive machinery.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -188,7 +181,6 @@
       "id": 8,
       "title": "DRY LAND",
       "description": "You reach a hatch and pull yourself through. This level is dry. The lighting is stable, cast in functional white LED. The air is slightly less stale. You are in a large maintenance bay.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -212,10 +204,6 @@
       "id": 9,
       "title": "UNIFORM",
       "description": "You find a locker. Inside is a grey jumpsuit. The patch reads: AETHELRED CORE - LEADER CLASS. A small medical kit heals your blisters. You also find a digital multi-tool.",
-      "grants": [
-        "multitool",
-        "coffee"
-      ],
       "options": [
         {
           "letter": "A",
@@ -231,7 +219,6 @@
       "id": 10,
       "title": "FIRST CONTACT",
       "description": "You step into the corridor. A figure in a blue jumpsuit approaches. It's a woman, her face tense. She holds a plasma welder defensively. \"Identify yourself!\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -255,7 +242,6 @@
       "id": 11,
       "title": "ELARA",
       "description": "She lowers the welder slightly. \"I am Elara, Worker Class. Maintenance, Sector 7.\" Her expression is cautious. \"You are early. The rotation schedule said next month. But I need your help.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -279,7 +265,6 @@
       "id": 12,
       "title": "THE TRUTH OF AETHELRED",
       "description": "Elara leads you to an observation deck. She punches a command. The blast shutters open. You are on an enormous oil platform. The ocean below is pure ice. Elara looks out. \"The government? They died in Oslo. But Project AETHELRED survived.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -303,7 +288,6 @@
       "id": 13,
       "title": "THE HISTORY LESSON",
       "description": "It was after the Iranian war. The burning oil refinery and the dirty nuclear bombs. It all collapsed in 2028. But these ocean platforms was secretly rebuilt for a new ice age. Now we are all that is left.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -319,7 +303,6 @@
       "id": 14,
       "title": "THE ROTATION SCHEME",
       "description": "A shadow crosses her face. \"Workers like me... we don't have stasis pods. We maintain the reactor. We grow the food. We live and die in the Core. But now the Core is dying. To keep everyone alive, we need to fix the Core.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -343,7 +326,6 @@
       "id": 15,
       "title": "MEMORY CHECK I",
       "description": "\"But only a few have access, and the leader on this shift is in a coma after the virus started to spread. I need your fingerprint and the access code. It is the year the AETHELRED project was secretly initiated in the old calendar, but only leaders know.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -351,7 +333,7 @@
           "target_scene": 14,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Code: 1999. (WRONG ANSWER. TRY AGAIN FROM SCENE 14.)"
+          "raw": "Code: 1999. (WRONG ANSWER. TRY AGAIN FROM SCENE 14)"
         },
         {
           "letter": "B",
@@ -359,7 +341,7 @@
           "target_scene": 14,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Code: 2021. (WRONG ANSWER. TRY AGAIN FROM SCENE 14.)"
+          "raw": "Code: 2021. (WRONG ANSWER. TRY AGAIN FROM SCENE 14)"
         },
         {
           "letter": "C",
@@ -375,7 +357,6 @@
       "id": 16,
       "title": "THE AI CORE",
       "description": "The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. \"The weather is worse, and still too cold outside. The core needs a new algorithm.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -383,7 +364,7 @@
           "target_scene": 17,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "Offer to help with the core's diagnostics. (Go to SCENE 17.)"
+          "raw": "Offer to help with the core's diagnostics. (Go to SCENE 17)"
         },
         {
           "letter": "B",
@@ -399,9 +380,6 @@
       "id": 17,
       "title": "TECHNICAL BOND",
       "description": "You use your multi-tool to bypass a faulty relay. Now the screen boots, and you can fix the algorithm. Elara looks up, surprised by your competence. A genuine smile breaks across her face. \"Not all Leaders are useless politicians,\" she quips.",
-      "grants": [
-        "multitool"
-      ],
       "options": [
         {
           "letter": "A",
@@ -417,7 +395,6 @@
       "id": 18,
       "title": "CHILLY OBSERVATION",
       "description": "You stand back. Elara works with efficient, practiced movements. But the core does not stabilize. She looks at you, her expression again guarded. You are just another Leader.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -433,7 +410,6 @@
       "id": 19,
       "title": "ASSIGNMENT",
       "description": "You log in to the terminal. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER ALGORITHM, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -449,7 +425,6 @@
       "id": 20,
       "title": "SHARED SECTOR",
       "description": "The Fusion Terminal is located in Sector 7\u2014the same sector Elara maintains. Over the next few weeks, you work in close proximity. You are tierd, but the mutual isolation draws you together.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -473,7 +448,6 @@
       "id": 21,
       "title": "THE OBSERVATION DECK",
       "description": "During your scarce downtime, you meet her on the Observation Deck. She talks about how she used to dream of the blue sky. You share your own memories of the world before the ice and grey clouds. You remember your private stuff in storage.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -481,7 +455,7 @@
           "target_scene": 22,
           "alt_target_scene": null,
           "condition": "has_coffee",
-          "raw": "Share your secret stash of coffee. (Go to SCENE 22.)"
+          "raw": "Share your secret stash of coffee. (Go to SCENE 22)"
         },
         {
           "letter": "B",
@@ -497,9 +471,6 @@
       "id": 22,
       "title": "COFFEE AND COMPLICITY",
       "description": "The aroma of real coffee fills the sterile deck. Her eyes widen. \"This... this is contraband, K-81.\" She laughs, a rare, beautiful sound. You drink the aromatic brew together.",
-      "grants": [
-        "coffee"
-      ],
       "options": [
         {
           "letter": "A",
@@ -523,7 +494,6 @@
       "id": 23,
       "title": "RESENTMENT",
       "description": "\"Do I Resent you? We all do our job. You sleep to preserve the intellect for the future. I work to keep us alive now. It is what it is.\" The honesty is real.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -539,7 +509,6 @@
       "id": 24,
       "title": "THE KISS",
       "description": "The proximity. You look at her, and realize she is the only other human that matters in this world of ice. It feels forbidden, the air is electric.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -563,7 +532,6 @@
       "id": 25,
       "title": "THE HIDDEN SEASON",
       "description": "You meet hidden in maintenance tunnels and the shadows of the fusion core. Your tuned algorithm makes the corn run again at peak efficiency. But the AI wants to put you back in stasis.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -579,7 +547,6 @@
       "id": 26,
       "title": "MEMORY CHECK II",
       "description": "\"STASIS PROTOCOL UNSTABLE\" AI controlled robots force you to the terminal. The pods will die without a reset command based on your stasis rotation pattern.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -587,7 +554,7 @@
           "target_scene": 25,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "5 Years Awake / 1 Year Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)"
+          "raw": "5 Years Awake / 1 Year Asleep. (GO TO SCENE 25)"
         },
         {
           "letter": "B",
@@ -603,7 +570,7 @@
           "target_scene": 25,
           "alt_target_scene": null,
           "condition": "none",
-          "raw": "1 Year Awake / 10 Years Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)"
+          "raw": "1 Year Awake / 10 Years Asleep. (GO TO SCENE 25)"
         }
       ]
     },
@@ -611,7 +578,6 @@
       "id": 27,
       "title": "T-MINUS ONE MONTH",
       "description": "The code is correct. The other pods stabilizes. A notification flashes: FORCED STASIS INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -635,7 +601,6 @@
       "id": 28,
       "title": "IMPOSSIBLE CHOICES",
       "description": "You find Elara in the hidden tunnel. \"When you wake up, I will be older, K-81. And you... you will still be you. My whole life will happen while you sleep.\" \"It does not matter.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -659,7 +624,6 @@
       "id": 29,
       "title": "SABOTAGE (A CHANCE?)",
       "description": "\"If you stay,\" Elara whispers, \"we will have to hide from the AI supervision, or else you will be forced into stasis. And another leader will be woken.\"",
-      "grants": [],
       "options": [
         {
           "letter": "A",
@@ -683,7 +647,6 @@
       "id": 30,
       "title": "THE DEEP FREEZE",
       "description": "The final hour. You are standing outside your stasis pod. Elara stands beside you. \"I\u2019ll be here when you wake up,\" she promises. The visor closes. The thick green gel begins to fill the chamber. Her face is blurred by the rising fluid. \"I love you!\"",
-      "grants": [],
       "options": []
     }
   ]
