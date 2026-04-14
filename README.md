@@ -155,7 +155,7 @@ Generated artifacts include:
 - `src/sceneNN_bitmap.h`
 - `build/scenes_pack.bin`
 
-## Build and disk creation
+## Commodore 64 Build and disk creation
 
 Build program:
 
