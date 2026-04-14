@@ -19,14 +19,14 @@ The story is written a while ago, but the current state of the world made me fin
 
 ## Story Summary
 
-`DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 narrative.
+`DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 and GameBoy narrative.
 You begin disoriented in a malfunctioning pod, uncover the truth of a post-collapse ice age, and navigate a rigid social order between waking elites and workers who never sleep.
 As you work to stabilize the station and complete memory/code checks, your relationship with Elara, a maintenance worker, turns personal and dangerous.
 The story builds toward a countdown to stasis and a final choice between duty, rebellion, and the little time two people can steal from a frozen future.
 
 ![DarkCurlyNights64 sample2](sample2.png)
 
-C64 interactive story prototype built with VS64 + llvm-mos.
+C64 interactive story prototype built with VS64 + llvm-mos. Now even includes a GameBoy port using GBDK-2020.
 
 This repository includes a ready-to-run disk image at:
 
@@ -55,6 +55,9 @@ So anyone can clone/download and launch directly in VICE.
 ## Game Boy port (GBDK-2020)
 
 The repository also includes a Game Boy DMG port on branch/work in `src/gb/`.
+
+Use SameBoy on you Mac or PC to play, or flash to cart for real hardware. ROM-files located here:
+- `build/gb/DarkCurlyNights_gb.gb`
 
 ### Tech stack
 
