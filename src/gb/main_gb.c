@@ -80,7 +80,7 @@
 #define ROW_OPTIONS_END  17   /* 4 rows for options (cursor + 3 visible) */
 
 /* Maximum options shown on screen at once */
-#define MAX_MENU_OPTIONS   3
+#define MAX_MENU_OPTIONS   4
 
 /* Gameplay text/menu area uses the full bottom half (rows 9..17) */
 #define ROW_BOTTOM_START  9
@@ -88,15 +88,14 @@
 #define ROW_BOTTOM_COUNT  (ROW_BOTTOM_END - ROW_BOTTOM_START + 1)
 
 /* Full-screen options layout */
-#define ROW_OPTIONS_PROMPT_1    0
-#define ROW_OPTIONS_PROMPT_2    1
-#define ROW_OPTIONS_GAP_AFTER_PROMPT 2
-#define ROW_OPTIONS_FIRST_SLOT  3
+#define ROW_OPTIONS_PROMPT      0
+#define ROW_OPTIONS_GAP_AFTER_PROMPT 1
+#define ROW_OPTIONS_FIRST_SLOT  2
 #define OPTION_TEXT_X       2
 #define OPTION_TEXT_WIDTH  (SCREEN_TILES_X - OPTION_TEXT_X)
 #define OPTION_SLOT_LINES   3
 #define OPTION_SLOT_STRIDE  4
-#define OPTION_SLOT_COUNT   3
+#define OPTION_SLOT_COUNT   4
 #define ROW_OPTIONS_FULL_START  0
 #define ROW_OPTIONS_FULL_END   17
 
@@ -142,6 +141,7 @@ extern const uint8_t font_ibm_fixed_tiles[];
  * Forward declarations
  * -------------------------------------------------------------------------- */
 static void        show_intro_screen(void);
+static void        show_part1_end_screen(void);
 static void        load_scene(uint8_t scene_id);
 static void        draw_scene_bitmap(uint8_t scene_id);
 static const char* draw_text_page(uint8_t start_row, uint8_t end_row, const char* text);
@@ -154,6 +154,9 @@ static void        show_scene_story_pages(const StoryScene* scene);
 static const StoryScene* find_scene_by_id(uint8_t scene_id);
 static uint8_t     build_menu_items(const StoryScene* scene, uint8_t* menu_items, uint8_t max_items);
 static void        refresh_menu_items(const StoryScene* scene);
+static uint8_t     menu_slot_row(uint8_t menu_index);
+static void        draw_menu_indicator(uint8_t menu_index, uint8_t selected);
+static void        update_menu_cursor(uint8_t previous_cursor, uint8_t new_cursor);
 static const char* menu_item_text(uint8_t menu_item);
 static char        peek_display_char(const char* text, uint8_t* advance);
 static char        next_display_char(const char** text);
@@ -543,6 +546,37 @@ static void refresh_menu_items(const StoryScene* scene) {
 }
 
 /* --------------------------------------------------------------------------
+ * Return the screen row used by a given menu slot.
+ * -------------------------------------------------------------------------- */
+static uint8_t menu_slot_row(uint8_t menu_index) {
+    return (uint8_t)(ROW_OPTIONS_FIRST_SLOT + (menu_index * OPTION_SLOT_STRIDE));
+}
+
+/* --------------------------------------------------------------------------
+ * Draw the numeric/blinking indicator for a menu slot.
+ * -------------------------------------------------------------------------- */
+static void draw_menu_indicator(uint8_t menu_index, uint8_t selected) {
+    if (menu_index >= g_menu_count || menu_index >= OPTION_SLOT_COUNT) {
+        return;
+    }
+
+    uint8_t row = menu_slot_row(menu_index);
+    if (selected && g_blink_state != 0) {
+        draw_char_xy(0, row, '*');
+    } else {
+        draw_char_xy(0, row, (char)('1' + menu_index));
+    }
+}
+
+/* --------------------------------------------------------------------------
+ * Update only the old/new cursor indicators without redrawing the full menu.
+ * -------------------------------------------------------------------------- */
+static void update_menu_cursor(uint8_t previous_cursor, uint8_t new_cursor) {
+    draw_menu_indicator(previous_cursor, 0);
+    draw_menu_indicator(new_cursor, 1);
+}
+
+/* --------------------------------------------------------------------------
  * Resolve a menu item id to display text.
  * -------------------------------------------------------------------------- */
 static const char* menu_item_text(uint8_t menu_item) {
@@ -639,8 +673,7 @@ static void draw_options(const StoryScene* scene) {
     /* Clear the FULL screen (bitmap area + text area) */
     clear_rows(ROW_OPTIONS_FULL_START, ROW_OPTIONS_FULL_END);
 
-    draw_text_line(0, ROW_OPTIONS_PROMPT_1, "  What do you want");
-    draw_text_line(0, ROW_OPTIONS_PROMPT_2, "  to do?");
+    draw_text_line(0, ROW_OPTIONS_PROMPT, "  What do you do?");
     clear_row(ROW_OPTIONS_GAP_AFTER_PROMPT);
 
     if (g_menu_count == 0) return;
@@ -651,22 +684,37 @@ static void draw_options(const StoryScene* scene) {
         uint8_t slot_end_row   = (uint8_t)(slot_start_row + OPTION_SLOT_LINES - 1);
         const char* text = menu_item_text(g_menu_items[idx]);
 
-        /* Draw number or blinking indicator in column 0 of top row of slot */
-        if (idx == g_cursor) {
-            if (g_blink_state == 0) {
-                draw_char_xy(0, slot_start_row, (char)('1' + idx));
-            } else {
-                draw_char_xy(0, slot_start_row, '*');
-            }
-        } else {
-            draw_char_xy(0, slot_start_row, (char)('1' + idx));
-        }
+        draw_menu_indicator(idx, (uint8_t)(idx == g_cursor));
 
         clear_row((uint8_t)(slot_end_row + 1));
 
         /* Draw wrapped text across all rows of this slot */
         draw_wrapped_lines(OPTION_TEXT_X, slot_start_row, slot_end_row, OPTION_TEXT_WIDTH, text);
     }
+}
+
+/* --------------------------------------------------------------------------
+ * Show end-of-part screen after the final story scene.
+ * Uses intro image with custom closing text.
+ * -------------------------------------------------------------------------- */
+static void show_part1_end_screen(void) {
+    uint8_t previous_bank = CURRENT_BANK;
+
+    SWITCH_ROM(BANK(INTRO_BITMAP_GB_DATA));
+    set_bkg_data(TILE_BASE_SCENE, IMAGE_TILE_COUNT, INTRO_BITMAP_GB_DATA);
+    SWITCH_ROM(previous_bank);
+
+    uint8_t tile_idx = 0;
+    for (uint8_t row = 0; row <= ROW_IMAGE_END; row++) {
+        for (uint8_t col = 0; col < SCREEN_TILES_X; col++) {
+            set_bkg_tile_xy(col, row, (uint8_t)(TILE_BASE_SCENE + tile_idx++));
+        }
+    }
+
+    clear_rows(ROW_TITLE, ROW_OPTIONS_END);
+    draw_text_line(3, 10, "End of part 1");
+    draw_text_line(1, 12, "Elara waits for you");
+    draw_text_line(5, 13, "in part 2");
 }
 
 /* --------------------------------------------------------------------------
@@ -691,6 +739,13 @@ static void load_scene(uint8_t scene_id) {
 
     /* --- Show paged description --- */
     show_scene_story_pages(scene);
+
+    if (scene->option_count == 0) {
+        g_active_scene = NULL;
+        g_menu_count = 0;
+        show_part1_end_screen();
+        return;
+    }
 
     /* --- Draw options full-screen (clears entire screen internally) --- */
     draw_options(scene);
@@ -795,12 +850,7 @@ void main(void) {
             
             /* Only redraw the blinking indicator character */
             if (g_active_scene && g_cursor < g_menu_count) {
-                uint8_t row = (uint8_t)(ROW_OPTIONS_FIRST_SLOT + (g_cursor * OPTION_SLOT_STRIDE));
-                if (g_blink_state == 0) {
-                    draw_char_xy(0, row, (char)('1' + g_cursor));
-                } else {
-                    draw_char_xy(0, row, '*');
-                }
+                draw_menu_indicator(g_cursor, 1);
             }
         }
 
@@ -810,10 +860,11 @@ void main(void) {
             if (scene) {
                 /* Move down if not already at last item */
                 if (g_menu_count > 0 && g_cursor < (uint8_t)(g_menu_count - 1)) {
+                    uint8_t previous_cursor = g_cursor;
                     g_cursor++;
                     g_blink_counter = 0;
                     g_blink_state = 0;
-                    draw_options(scene);
+                    update_menu_cursor(previous_cursor, g_cursor);
                 }
             }
             wait_for_release(J_DOWN);
@@ -824,10 +875,11 @@ void main(void) {
             if (scene) {
                 /* Move up if not already at first item */
                 if (g_cursor > 0) {
+                    uint8_t previous_cursor = g_cursor;
                     g_cursor--;
                     g_blink_counter = 0;
                     g_blink_state = 0;
-                    draw_options(scene);
+                    update_menu_cursor(previous_cursor, g_cursor);
                 }
             }
             wait_for_release(J_UP);
