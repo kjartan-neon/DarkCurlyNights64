@@ -90,7 +90,7 @@ Output:
 
 ![C64 and GB side by side](c64-gb-sidebyside.png)
 
-## Current runtime and disk layout
+## Commodore 64: Current runtime and disk layout
 
 - Runtime loads scenes as **per-scene files** from disk (`01`..`30`).
 - Disk build writes:
