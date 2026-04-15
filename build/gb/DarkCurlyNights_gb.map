@@ -43,9 +43,9 @@ Area                       Addr        Size        Decimal Bytes (Attributes)
      00002D00  l__CODE_2 |    00002D00  l__CODE_3 |    00002D00  l__CODE_4
      00002D00  l__CODE_5 |    00002D00  l__CODE_6 |    00002D00  l__CODE_7
      00002D00  l__CODE_8 |    00002D00  l__CODE_9 |    00003000  _rROMB1  
-     0000308C  l__CODE   |    0000328C  s__HOME   |    00003D4E  s__BASE  
-     00003D4E  s__CODE_0 |    00003D4E  s__INITIA |    00003D4E  s__LIT   
-     00003D56  s__GSINIT |    00003D62  s__GSFINA |    00004000  _rMBC7_SR
+     000030FC  l__CODE   |    000032FC  s__HOME   |    00003DBE  s__BASE  
+     00003DBE  s__CODE_0 |    00003DBE  s__INITIA |    00003DBE  s__LIT   
+     00003DC6  s__GSINIT |    00003DD2  s__GSFINA |    00004000  _rMBC7_SR
      00004000  _rRAMB    |    00008000  __VRAM    |    00008000  __VRAM800
      00008800  __VRAM880 |    00009000  __VRAM900 |    00009800  __SCRN0  
      00009C00  __SCRN1   |    0000A000  __SRAM    |    0000A000  _rMBC7_LA
@@ -95,12 +95,14 @@ Hexadecimal  [32-Bits]
 
 Area                       Addr        Size        Decimal Bytes (Attributes)
 --------------------       ----        ----        ------- ----- ------------
-_CODE                  00000200    0000308C =       12428. bytes (REL,CON)
+_CODE                  00000200    000030FC =       12540. bytes (REL,CON)
 
         Value  Global            Value  Global            Value  Global    
         -----  ------            -----  ------            -----  ------    
-     000030E5  _main     |    0000324B  _set_vram |    00003254  _set_win_
-     0000325D  _set_bkg_
+     000030F2  _main     |    00003257  _set_vram |    00003260  _set_win_
+     00003269  _set_bkg_ |    00003298  _cgb_comp |    00003298  _set_defa
+     000032B1  _set_spri |    000032B6  _set_bkg_ |    000032B9  .set_pale
+     000032D8  _set_spri |    000032DD  _set_bkg_ |    000032E0  .set_pale
 ASxxxx Linker V03.00/V05.40 + sdld,  page 4.
 Hexadecimal  [32-Bits]
 
@@ -278,23 +280,23 @@ Hexadecimal  [32-Bits]
 
 Area                       Addr        Size        Decimal Bytes (Attributes)
 --------------------       ----        ----        ------- ----- ------------
-_HOME                  0000328C    00000AC2 =        2754. bytes (REL,CON)
+_HOME                  000032FC    00000AC2 =        2754. bytes (REL,CON)
 
         Value  Global            Value  Global            Value  Global    
         -----  ------            -----  ------            -----  ------    
-     0000328C  .memset_s |    00003295  .memcpy_s |    000032B2  .display_
-     000032B2  _display_ |    000032CA  _font_ibm |    000033CC  _font_ibm
-     00003BCC  __modulon |    00003C69  _fill_bkg |    00003C7B  .padup   
-     00003C7B  _waitpadu |    00003C8B  .jpad     |    00003C8B  _joypad  
-     00003CB3  _waitpad  |    00003CB4  .wait_pad |    00003CBB  _set_tile
-     00003CC0  _set_bkg_ |    00003CC0  _set_win_ |    00003CC8  _set_spri
-     00003CF8  .fill_rec |    00003D01  .fill_rec
+     000032FC  .memset_s |    00003305  .memcpy_s |    00003322  .display_
+     00003322  _display_ |    0000333A  _font_ibm |    0000343C  _font_ibm
+     00003C3C  __modulon |    00003CD9  _fill_bkg |    00003CEB  .padup   
+     00003CEB  _waitpadu |    00003CFB  .jpad     |    00003CFB  _joypad  
+     00003D23  _waitpad  |    00003D24  .wait_pad |    00003D2B  _set_tile
+     00003D30  _set_bkg_ |    00003D30  _set_win_ |    00003D38  _set_spri
+     00003D68  .fill_rec |    00003D71  .fill_rec
 ASxxxx Linker V03.00/V05.40 + sdld,  page 23.
 Hexadecimal  [32-Bits]
 
 Area                       Addr        Size        Decimal Bytes (Attributes)
 --------------------       ----        ----        ------- ----- ------------
-_INITIALIZER           00003D4E    00000008 =           8. bytes (REL,CON)
+_INITIALIZER           00003DBE    00000008 =           8. bytes (REL,CON)
 
         Value  Global            Value  Global            Value  Global    
         -----  ------            -----  ------            -----  ------    
@@ -303,17 +305,17 @@ Hexadecimal  [32-Bits]
 
 Area                       Addr        Size        Decimal Bytes (Attributes)
 --------------------       ----        ----        ------- ----- ------------
-_GSINIT                00003D56    0000000C =          12. bytes (REL,CON)
+_GSINIT                00003DC6    0000000C =          12. bytes (REL,CON)
 
         Value  Global            Value  Global            Value  Global    
         -----  ------            -----  ------            -----  ------    
-     00003D56  gsinit   
+     00003DC6  gsinit   
 ASxxxx Linker V03.00/V05.40 + sdld,  page 25.
 Hexadecimal  [32-Bits]
 
 Area                       Addr        Size        Decimal Bytes (Attributes)
 --------------------       ----        ----        ------- ----- ------------
-_GSFINAL               00003D62    00000001 =           1. bytes (REL,CON)
+_GSFINAL               00003DD2    00000001 =           1. bytes (REL,CON)
 
         Value  Global            Value  Global            Value  Global    
         -----  ------            -----  ------            -----  ------    
@@ -528,69 +530,69 @@ _CODE_16               00104000    00001680 =        5760. bytes (REL,CON)
 Files Linked                              [ module(s) ]
 
 /usr/local/local/lib/gbdk/lib/gb/crt0.o   [ Runtime ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699461.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949301.rel
                                           [ main_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994631.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493031.rel
                                           [ scene30_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699462.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949302.rel
                                           [ scene01_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699463.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949303.rel
                                           [ scene02_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699464.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949304.rel
                                           [ scene03_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699465.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949305.rel
                                           [ scene04_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699466.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949306.rel
                                           [ scene05_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699467.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949307.rel
                                           [ scene06_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699468.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949308.rel
                                           [ scene07_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699469.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949309.rel
                                           [ scene08_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994610.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493010.rel
                                           [ scene09_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994611.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493011.rel
                                           [ scene10_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994612.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493012.rel
                                           [ scene11_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994613.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493013.rel
                                           [ scene12_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994614.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493014.rel
                                           [ scene13_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994615.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493015.rel
                                           [ scene14_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994616.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493016.rel
                                           [ scene15_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994617.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493017.rel
                                           [ scene16_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994618.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493018.rel
                                           [ scene17_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994619.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493019.rel
                                           [ scene18_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994620.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493020.rel
                                           [ scene19_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994621.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493021.rel
                                           [ scene20_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994622.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493022.rel
                                           [ scene21_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994623.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493023.rel
                                           [ scene22_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994624.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493024.rel
                                           [ scene23_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994625.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493025.rel
                                           [ scene24_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994626.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493026.rel
                                           [ scene25_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994627.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493027.rel
                                           [ scene26_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994628.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493028.rel
                                           [ scene27_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994629.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493029.rel
                                           [ scene28_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc6994630.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc9493030.rel
                                           [ scene29_bitmap_gb ]
-/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc699460.rel
+/var/folders/ry/m1jksfn92dxg7h0zskbshkxr0000gp/T/lcc949300.rel
                                           [ intro_bitmap_gb ]
 
 
@@ -604,7 +606,9 @@ Libraries Linked                          [ object file ]
 /usr/local/local/lib/gbdk/lib/gb/gb.lib   [ pad.o ]
 /usr/local/local/lib/gbdk/lib/gb/gb.lib   [ sfr.o ]
 /usr/local/local/lib/gbdk/lib/gb/gb.lib   [ set_data.o ]
+/usr/local/local/lib/gbdk/lib/gb/gb.lib   [ cgb_compat.o ]
 /usr/local/local/lib/gbdk/lib/gb/gb.lib   [ fill_rect.o ]
+/usr/local/local/lib/gbdk/lib/gb/gb.lib   [ cgb_palettes.o ]
 
 ASxxxx Linker V03.00/V05.40 + sdld,  page 46.
 

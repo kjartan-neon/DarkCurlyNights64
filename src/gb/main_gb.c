@@ -15,6 +15,7 @@
  * ========================================================================== */
 
 #include <gb/gb.h>
+#include <gb/cgb.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -163,6 +164,7 @@ static char        next_display_char(const char** text);
 static uint8_t     ui_tile_for_char(char ch);
 static void        load_ui_font_tiles(void);
 static uint8_t     draw_wrapped_lines(uint8_t x, uint8_t start_row, uint8_t end_row, uint8_t width, const char* text);
+static void        initialize_palettes(void);
 
 /* --------------------------------------------------------------------------
  * Scene bitmap lookup table
@@ -344,6 +346,19 @@ static void clear_row(uint8_t y) {
 static void clear_rows(uint8_t from_row, uint8_t to_row) {
     for (uint8_t y = from_row; y <= to_row; y++) {
         clear_row(y);
+    }
+}
+
+/* --------------------------------------------------------------------------
+ * Initialize palettes in a DMG-safe way.
+ * DMG: keep existing greyscale register mapping.
+ * CGB: use GBDK default palette 0 for DMG-like appearance.
+ * -------------------------------------------------------------------------- */
+static void initialize_palettes(void) {
+    BGP_REG = PALETTE_NORMAL;
+
+    if (_cpu == CGB_TYPE) {
+        set_default_palette();
     }
 }
 
@@ -812,7 +827,7 @@ void main(void) {
     /* Load compact mixed-case UI font (fits with 9 image rows) */
     load_ui_font_tiles();
 
-    BGP_REG = PALETTE_NORMAL;   /* Set greyscale palette */
+    initialize_palettes();
 
     /* Clear the full background map */
     fill_bkg_rect(0, 0, SCREEN_TILES_X, SCREEN_TILES_Y, TILE_BLANK);
