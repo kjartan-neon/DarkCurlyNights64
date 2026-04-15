@@ -19,14 +19,14 @@ The story is written a while ago, but the current state of the world made me fin
 
 ## Story Summary
 
-`DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 and GameBoy narrative.
+`DarkCurlyNights64` adapts **PROJECT: AETHELRED – Part One: The Deep Freeze** into a branching C64 narrative.
 You begin disoriented in a malfunctioning pod, uncover the truth of a post-collapse ice age, and navigate a rigid social order between waking elites and workers who never sleep.
 As you work to stabilize the station and complete memory/code checks, your relationship with Elara, a maintenance worker, turns personal and dangerous.
 The story builds toward a countdown to stasis and a final choice between duty, rebellion, and the little time two people can steal from a frozen future.
 
 ![DarkCurlyNights64 sample2](sample2.png)
 
-C64 interactive story prototype built with VS64 + llvm-mos. Now even includes a GameBoy port using GBDK-2020.
+C64 interactive story prototype built with VS64 + llvm-mos.
 
 This repository includes a ready-to-run disk image at:
 
@@ -52,45 +52,7 @@ So anyone can clone/download and launch directly in VICE.
 
 ![DarkCurlyNights64 sample](sample.png)
 
-## Game Boy port (GBDK-2020)
-
-The repository also includes a Game Boy DMG port on branch/work in `src/gb/`.
-
-Use SameBoy on you Mac or PC to play, or flash to cart for real hardware. ROM-files located here:
-- `build/gb/DarkCurlyNights_gb.gb`
-
-### Tech stack
-
-- **Language/toolchain**: C with **GBDK-2020** (`lcc`, target `-msm83:gb`)
-- **Build**: `Makefile_gb`
-- **Assets**: `tools/generate_gb_asset.py` generates `sceneNN_bitmap_gb.c/.h` + intro bitmap
-- **Shared story data**: `src/generated_story.h` compiled from `story.md`
-
-### Key GB adjustments
-
-- Full DMG UI flow with scene image + paged story + selection menu
-- Compact mixed-case UI font (curated tile set) to keep **9 image rows** on screen
-- Menu cursor rendering optimized so only indicator tiles (`1/2/3/4` and blinking `*`) update on UP/DOWN
-- Selection menu supports up to **4 entries** so `Read scene again` appears as option 4 when needed
-- Dedicated end-of-part screen after final scene using intro image and closing text:
-	- `End of part 1`
-	- `Elara waits for you`
-	- `in part 2`
-- Defensive menu/index guards to avoid invalid option reads
-
-### Build GB ROM
-
-```zsh
-make -f Makefile_gb
-```
-
-Output:
-
-- `build/gb/DarkCurlyNights_gb.gb`
-
-![C64 and GB side by side](c64-gb-sidebyside.png)
-
-## Commodore 64: Current runtime and disk layout
+## Current runtime and disk layout
 
 - Runtime loads scenes as **per-scene files** from disk (`01`..`30`).
 - Disk build writes:
@@ -155,7 +117,7 @@ Generated artifacts include:
 - `src/sceneNN_bitmap.h`
 - `build/scenes_pack.bin`
 
-## Commodore 64 Build and disk creation
+## Build and disk creation
 
 Build program:
 
