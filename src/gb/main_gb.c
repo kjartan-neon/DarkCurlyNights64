@@ -436,10 +436,15 @@ static const char* draw_text_page(uint8_t start_row, uint8_t end_row, const char
 
         /* Check if word fits on current row */
         if (col + word_len > SCREEN_TILES_X && col > 0) {
-            /* Move to next row */
+            /* Move to next row; skip any space that would start the new row */
             row++;
             col = 0;
             if (row > end_row) break;
+            uint8_t space_advance;
+            char space_ch = peek_display_char(p, &space_advance);
+            if (space_ch == ' ') {
+                p += space_advance;
+            }
         }
 
         /* Print each character of the word */
