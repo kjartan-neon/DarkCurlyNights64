@@ -6,8 +6,6 @@
 #define STORY_COND_NONE 0
 #define STORY_COND_HAS_MULTITOOL 1
 #define STORY_COND_HAS_COFFEE 2
-#define STORY_FLAG_MULTITOOL 1
-#define STORY_FLAG_COFFEE 2
 
 typedef struct {
     const char* text;
@@ -22,7 +20,6 @@ typedef struct {
     const char* description;
     uint8_t first_option;
     uint8_t option_count;
-    uint8_t grants_flags;
 } StoryScene;
 
 static const uint8_t STORY_SCENE_COUNT = 30;
@@ -87,36 +84,36 @@ static const StoryOption STORY_OPTIONS[] = {
 };
 
 static const StoryScene STORY_SCENES[] = {
-    {1, "THE COLD AWAKENING", "Your consciousness returns as a freezing sensation. You are floating in viscous gel. An amber emergency light flickers. You are trapped in a stasis pod. The gel is draining, revealing dim, archaic control panels.", 0, 3, 0},
-    {2, "EXHUMATION", "The pod hiss-pops open. The transition from zero-G gel to heavy artificial gravity is brutal. You collapse onto cold metal grating. The air smells sterile and ancient. You cough up residual fluid, your limbs weak as wet noodles. You are alone in a room.", 3, 2, 0},
-    {3, "AMBER MESSAGES", "The green CRT monitor is cracked but functional. You boot the system. LOG START YEAR 2037: STATION: AETHELRED-HULL 4. CLASS: LEADER. STATUS: EMERGENCY AWAKENING CYCLE. The interface demands confirmation of the last global protocol. You search your hazy memory.", 5, 3, 0},
-    {4, "SUBMERGED CORRIDOR", "You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A bulkhead blocks the path.", 8, 2, 0},
-    {5, "CONFIRMED IDENTITY", "IDENTITY CONFIRMED: SUBJECT K-81. A screen with fingerprint reader next to the exit. An audio log plays: \"The Middle East thermal bloom... the Gulf Stream collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to Core.\"", 10, 2, 0},
-    {6, "MECHANICAL FAILURE", "You seize the bypass wheel. It's seized with rust. You strain, your weak muscles screaming. With a sharp crack, it gives. You hear a scary sound from the other side.", 12, 2, 0},
-    {7, "THE ASCENT", "You enter the elevator shaft. The lift is broken. You must climb the emergency ladder. It feels like miles. Your hands blister. The groan of the metal deepens as you ascend toward the distant hum of massive machinery.", 14, 2, 0},
-    {8, "DRY LAND", "You reach a hatch and pull yourself through. This level is dry. The lighting is stable, cast in functional white LED. The air is slightly less stale. You are in a large maintenance bay.", 16, 2, 0},
-    {9, "UNIFORM", "You find a locker. Inside is a grey jumpsuit. The patch reads: AETHELRED CORE - LEADER CLASS. A small medical kit heals your blisters. You also find a digital multi-tool.", 18, 1, STORY_FLAG_MULTITOOL | STORY_FLAG_COFFEE},
-    {10, "FIRST CONTACT", "You step into the corridor. A figure in a blue jumpsuit approaches. It's a woman, her face tense. She holds a plasma welder defensively. \"Identify yourself!\"", 19, 2, 0},
-    {11, "ELARA", "She lowers the welder slightly. \"I am Elara, Worker Class. Maintenance, Sector 7.\" Her expression is cautious. \"You are early. The rotation schedule said next month. But I need your help.\"", 21, 2, 0},
-    {12, "THE TRUTH OF AETHELRED", "Elara leads you to an observation deck. She punches a command. The blast shutters open. You are on an enormous oil platform. The ocean below is pure ice. Elara looks out. \"The government? They died in Oslo. But Project AETHELRED survived.\"", 23, 2, 0},
-    {13, "THE HISTORY LESSON", "It was after the Iranian war. The burning oil refinery and the dirty nuclear bombs. It all collapsed in 2028. But these ocean platforms was secretly rebuilt for a new ice age. Now we are all that is left.\"", 25, 1, 0},
-    {14, "THE ROTATION SCHEME", "A shadow crosses her face. \"Workers like me... we don't have stasis pods. We maintain the reactor. We grow the food. We live and die in the Core. But now the Core is dying. To keep everyone alive, we need to fix the Core.\"", 26, 2, 0},
-    {15, "MEMORY CHECK I", "\"But only a few have access, and the leader on this shift is in a coma after the virus started to spread. I need your fingerprint and the access code. It is the year the AETHELRED project was secretly initiated in the old calendar, but only leaders know.\"", 28, 3, 0},
-    {16, "THE AI CORE", "The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. \"The weather is worse, and still too cold outside. The core needs a new algorithm.\"", 31, 2, 0},
-    {17, "TECHNICAL BOND", "You use your multi-tool to bypass a faulty relay. Now the screen boots, and you can fix the algorithm. Elara looks up, surprised by your competence. A genuine smile breaks across her face. \"Not all Leaders are useless politicians,\" she quips.", 33, 1, STORY_FLAG_MULTITOOL},
-    {18, "CHILLY OBSERVATION", "You stand back. Elara works with efficient, practiced movements. But the core does not stabilize. She looks at you, her expression again guarded. You are just another Leader.", 34, 1, 0},
-    {19, "ASSIGNMENT", "You log in to the terminal. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER ALGORITHM, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.", 35, 1, 0},
-    {20, "SHARED SECTOR", "The Fusion Terminal is located in Sector 7—the same sector Elara maintains. Over the next few weeks, you work in close proximity. You are tierd, but the mutual isolation draws you together.", 36, 2, 0},
-    {21, "THE OBSERVATION DECK", "During your scarce downtime, you meet her on the Observation Deck. She talks about how she used to dream of the blue sky. You share your own memories of the world before the ice and grey clouds. You remember your private stuff in storage.", 38, 2, 0},
-    {22, "COFFEE AND COMPLICITY", "The aroma of real coffee fills the sterile deck. Her eyes widen. \"This... this is contraband, K-81.\" She laughs, a rare, beautiful sound. You drink the aromatic brew together.", 40, 2, STORY_FLAG_COFFEE},
-    {23, "RESENTMENT", "\"Do I Resent you? We all do our job. You sleep to preserve the intellect for the future. I work to keep us alive now. It is what it is.\" The honesty is real.", 42, 1, 0},
-    {24, "THE KISS", "The proximity. You look at her, and realize she is the only other human that matters in this world of ice. It feels forbidden, the air is electric.", 43, 2, 0},
-    {25, "THE HIDDEN SEASON", "You meet hidden in maintenance tunnels and the shadows of the fusion core. Your tuned algorithm makes the corn run again at peak efficiency. But the AI wants to put you back in stasis.", 45, 1, 0},
-    {26, "MEMORY CHECK II", "\"STASIS PROTOCOL UNSTABLE\" AI controlled robots force you to the terminal. The pods will die without a reset command based on your stasis rotation pattern.", 46, 3, 0},
-    {27, "T-MINUS ONE MONTH", "The code is correct. The other pods stabilizes. A notification flashes: FORCED STASIS INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.", 49, 2, 0},
-    {28, "IMPOSSIBLE CHOICES", "You find Elara in the hidden tunnel. \"When you wake up, I will be older, K-81. And you... you will still be you. My whole life will happen while you sleep.\" \"It does not matter.\"", 51, 2, 0},
-    {29, "SABOTAGE (A CHANCE?)", "\"If you stay,\" Elara whispers, \"we will have to hide from the AI supervision, or else you will be forced into stasis. And another leader will be woken.\"", 53, 2, 0},
-    {30, "THE DEEP FREEZE", "The final hour. You are standing outside your stasis pod. Elara stands beside you. \"I’ll be here when you wake up,\" she promises. The visor closes. The thick green gel begins to fill the chamber. Her face is blurred by the rising fluid. \"I love you!\"", 55, 0, 0},
+    {1, "THE COLD AWAKENING", "Your consciousness returns as a freezing sensation. You are floating in viscous gel. An amber emergency light flickers. You are trapped in a stasis pod. The gel is draining, revealing dim, archaic control panels.", 0, 3},
+    {2, "EXHUMATION", "The pod hiss-pops open. The transition from zero-G gel to heavy artificial gravity is brutal. You collapse onto cold metal grating. The air smells sterile and ancient. You cough up residual fluid, your limbs weak as wet noodles. You are alone in a room.", 3, 2},
+    {3, "AMBER MESSAGES", "The green CRT monitor is cracked but functional. You boot the system. LOG START YEAR 2037: STATION: AETHELRED-HULL 4. CLASS: LEADER. STATUS: EMERGENCY AWAKENING CYCLE. The interface demands confirmation of the last global protocol. You search your hazy memory.", 5, 3},
+    {4, "SUBMERGED CORRIDOR", "You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A bulkhead blocks the path.", 8, 2},
+    {5, "CONFIRMED IDENTITY", "IDENTITY CONFIRMED: SUBJECT K-81. A screen with fingerprint reader next to the exit. An audio log plays: \"The Middle East thermal bloom... the Gulf Stream collapsed. We are activating AETHELRED. Welcome to the new Ice Age, K-81. Report to Core.\"", 10, 2},
+    {6, "MECHANICAL FAILURE", "You seize the bypass wheel. It's seized with rust. You strain, your weak muscles screaming. With a sharp crack, it gives. You hear a scary sound from the other side.", 12, 2},
+    {7, "THE ASCENT", "You enter the elevator shaft. The lift is broken. You must climb the emergency ladder. It feels like miles. Your hands blister. The groan of the metal deepens as you ascend toward the distant hum of massive machinery.", 14, 2},
+    {8, "DRY LAND", "You reach a hatch and pull yourself through. This level is dry. The lighting is stable, cast in functional white LED. The air is slightly less stale. You are in a large maintenance bay.", 16, 2},
+    {9, "UNIFORM", "You find a locker. Inside is a grey jumpsuit. The patch reads: AETHELRED CORE - LEADER CLASS. A small medical kit heals your blisters. You also find a digital multi-tool.", 18, 1},
+    {10, "FIRST CONTACT", "You step into the corridor. A figure in a blue jumpsuit approaches. It's a woman, her face tense. She holds a plasma welder defensively. \"Identify yourself!\"", 19, 2},
+    {11, "ELARA", "She lowers the welder slightly. \"I am Elara, Worker Class. Maintenance, Sector 7.\" Her expression is cautious. \"You are early. The rotation schedule said next month. But I need your help.\"", 21, 2},
+    {12, "THE TRUTH OF AETHELRED", "Elara leads you to an observation deck. She punches a command. The blast shutters open. You are on an enormous oil platform. The ocean below is pure ice. Elara looks out. \"The government? They died in Oslo. But Project AETHELRED survived.\"", 23, 2},
+    {13, "THE HISTORY LESSON", "It was after the Iranian war. The burning oil refinery and the dirty nuclear bombs. It all collapsed in 2028. But these ocean platforms was secretly rebuilt for a new ice age. Now we are all that is left.\"", 25, 1},
+    {14, "THE ROTATION SCHEME", "A shadow crosses her face. \"Workers like me... we don't have stasis pods. We maintain the reactor. We grow the food. We live and die in the Core. But now the Core is dying. To keep everyone alive, we need to fix the Core.\"", 26, 2},
+    {15, "MEMORY CHECK I", "\"But only a few have access, and the leader on this shift is in a coma after the virus started to spread. I need your fingerprint and the access code. It is the year the AETHELRED project was secretly initiated in the old calendar, but only leaders know.\"", 28, 3},
+    {16, "THE AI CORE", "The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. \"The weather is worse, and still too cold outside. The core needs a new algorithm.\"", 31, 2},
+    {17, "TECHNICAL BOND", "You use your multi-tool to bypass a faulty relay. Now the screen boots, and you can fix the algorithm. Elara looks up, surprised by your competence. A genuine smile breaks across her face. \"Not all Leaders are useless politicians,\" she quips.", 33, 1},
+    {18, "CHILLY OBSERVATION", "You stand back. Elara works with efficient, practiced movements. But the core does not stabilize. She looks at you, her expression again guarded. You are just another Leader.", 34, 1},
+    {19, "ASSIGNMENT", "You log in to the terminal. K-81: EMERGENCY - AWAKE EARLY TO OPTIMIZE FUSION STABILIZER ALGORITHM, SECTOR 7. DURATION: 1 YEAR. PREP FOR STASIS RETURN: YEAR 2143.", 35, 1},
+    {20, "SHARED SECTOR", "The Fusion Terminal is located in Sector 7—the same sector Elara maintains. Over the next few weeks, you work in close proximity. You are tierd, but the mutual isolation draws you together.", 36, 2},
+    {21, "THE OBSERVATION DECK", "During your scarce downtime, you meet her on the Observation Deck. She talks about how she used to dream of the blue sky. You share your own memories of the world before the ice and grey clouds. You remember your private stuff in storage.", 38, 2},
+    {22, "COFFEE AND COMPLICITY", "The aroma of real coffee fills the sterile deck. Her eyes widen. \"This... this is contraband, K-81.\" She laughs, a rare, beautiful sound. You drink the aromatic brew together.", 40, 2},
+    {23, "RESENTMENT", "\"Do I Resent you? We all do our job. You sleep to preserve the intellect for the future. I work to keep us alive now. It is what it is.\" The honesty is real.", 42, 1},
+    {24, "THE KISS", "The proximity. You look at her, and realize she is the only other human that matters in this world of ice. It feels forbidden, the air is electric.", 43, 2},
+    {25, "THE HIDDEN SEASON", "You meet hidden in maintenance tunnels and the shadows of the fusion core. Your tuned algorithm makes the corn run again at peak efficiency. But the AI wants to put you back in stasis.", 45, 1},
+    {26, "MEMORY CHECK II", "\"STASIS PROTOCOL UNSTABLE\" AI controlled robots force you to the terminal. The pods will die without a reset command based on your stasis rotation pattern.", 46, 3},
+    {27, "T-MINUS ONE MONTH", "The code is correct. The other pods stabilizes. A notification flashes: FORCED STASIS INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.", 49, 2},
+    {28, "IMPOSSIBLE CHOICES", "You find Elara in the hidden tunnel. \"When you wake up, I will be older, K-81. And you... you will still be you. My whole life will happen while you sleep.\" \"It does not matter.\"", 51, 2},
+    {29, "SABOTAGE (A CHANCE?)", "\"If you stay,\" Elara whispers, \"we will have to hide from the AI supervision, or else you will be forced into stasis. And another leader will be woken.\"", 53, 2},
+    {30, "THE DEEP FREEZE", "The final hour. You are standing outside your stasis pod. Elara stands beside you. \"I’ll be here when you wake up,\" she promises. The visor closes. The thick green gel begins to fill the chamber. Her face is blurred by the rising fluid. \"I love you!\"", 55, 0},
 };
 
 #endif

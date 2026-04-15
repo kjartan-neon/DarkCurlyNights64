@@ -28,7 +28,6 @@ class Scene:
     title: str
     description: str
     options: list[Option]
-    grants: list[str]
 
 
 SCENE_RE = re.compile(r"^SCENE\s+(\d+):\s*(.+)$", re.IGNORECASE)
@@ -138,14 +137,7 @@ def parse_story(markdown: str) -> list[Scene]:
             idx += 1
 
         description = normalize_spaces(" ".join(desc_lines))
-        grants: list[str] = []
-        dlow = description.lower()
-        if "multi-tool" in dlow or scene_id == 9:
-            grants.append("multitool")
-        if "coffee" in dlow or scene_id == 9:
-            grants.append("coffee")
-
-        scenes.append(Scene(scene_id, scene_title, description, options, grants))
+        scenes.append(Scene(scene_id, scene_title, description, options))
 
     scene_by_id = {s.id: s for s in scenes}
     for scene in scenes:
@@ -174,7 +166,6 @@ def emit_json(scenes: list[Scene], out_path: Path) -> None:
                 "id": s.id,
                 "title": s.title,
                 "description": s.description,
-                "grants": s.grants,
                 "options": [
                     {
                         "letter": o.letter,
@@ -201,17 +192,6 @@ def cond_to_c(cond: str) -> str:
     return "STORY_COND_NONE"
 
 
-def grants_to_c_mask(grants: list[str]) -> str:
-    parts: list[str] = []
-    if "multitool" in grants:
-        parts.append("STORY_FLAG_MULTITOOL")
-    if "coffee" in grants:
-        parts.append("STORY_FLAG_COFFEE")
-    if not parts:
-        return "0"
-    return " | ".join(parts)
-
-
 def emit_header(scenes: list[Scene], out_path: Path) -> None:
     option_items: list[tuple[int, Option]] = []
     for s in scenes:
@@ -227,8 +207,6 @@ def emit_header(scenes: list[Scene], out_path: Path) -> None:
     lines.append("#define STORY_COND_NONE 0")
     lines.append("#define STORY_COND_HAS_MULTITOOL 1")
     lines.append("#define STORY_COND_HAS_COFFEE 2")
-    lines.append("#define STORY_FLAG_MULTITOOL 1")
-    lines.append("#define STORY_FLAG_COFFEE 2")
     lines.append("")
     lines.append("typedef struct {")
     lines.append("    const char* text;")
@@ -243,7 +221,6 @@ def emit_header(scenes: list[Scene], out_path: Path) -> None:
     lines.append("    const char* description;")
     lines.append("    uint8_t first_option;")
     lines.append("    uint8_t option_count;")
-    lines.append("    uint8_t grants_flags;")
     lines.append("} StoryScene;")
     lines.append("")
     lines.append(f"static const uint8_t STORY_SCENE_COUNT = {len(scenes)};")
@@ -261,7 +238,7 @@ def emit_header(scenes: list[Scene], out_path: Path) -> None:
     first_idx = 0
     for s in scenes:
         lines.append(
-            f'    {{{s.id}, "{escape_c_string(s.title)}", "{escape_c_string(s.description)}", {first_idx}, {len(s.options)}, {grants_to_c_mask(s.grants)}}},'
+            f'    {{{s.id}, "{escape_c_string(s.title)}", "{escape_c_string(s.description)}", {first_idx}, {len(s.options)}}},'
         )
         first_idx += len(s.options)
     lines.append("};")

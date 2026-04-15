@@ -22,10 +22,6 @@ env/
 venv/
 ENV/
 .venv/
-build/
-!/build/
-/build/*
-!/build/DarkCurlyNights64.d64
 develop-eggs/
 dist/
 downloads/
@@ -73,3 +69,4 @@ tags
 # VICE emulator
 *.bak
 *.snap
+DarkCurlyNights64.code-workspace

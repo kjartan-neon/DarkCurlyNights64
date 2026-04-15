@@ -17,9 +17,9 @@ Description:
 The green CRT monitor is cracked but functional. You boot the system.
 LOG START YEAR 2037: STATION: AETHELRED-HULL 4. CLASS: LEADER. STATUS: EMERGENCY AWAKENING CYCLE.
 The interface demands confirmation of the last global protocol. You search your hazy memory.
- * Option A: Enter Protocol 'GULF SHIFT'. (WRONG ANSWER. SYSTEM LOCKED. TRY AGAIN FROM SCENE 2.)
+ * Option A: Enter Protocol 'GULF SHIFT'. (GO TO SCENE 2)
  * Option B: Enter Protocol 'WHITE OSLO'. (Go to SCENE 5)
- * Option C: Enter Protocol 'ATOM FALL'. (WRONG ANSWER. SYSTEM LOCKED. TRY AGAIN FROM SCENE 2.)
+ * Option C: Enter Protocol 'ATOM FALL'. (GO TO SCENE 2)
 SCENE 4: SUBMERGED CORRIDOR
 Description:
 You stumble into a corridor. The structure groans under immense pressure. Through a thick viewport, you see only deep blue darkness. Small, bio- luminescent creatures drift by. You aren't just in a base; you are deep underwater. A bulkhead blocks the path.
@@ -76,13 +76,13 @@ A shadow crosses her face. "Workers like me... we don't have stasis pods. We mai
 SCENE 15: MEMORY CHECK I
 Description:
 "But only a few have access, and the leader on this shift is in a coma after the virus started to spread. I need your fingerprint and the access code. It is the year the AETHELRED project was secretly initiated in the old calendar, but only leaders know."
- * Option A: Code: 1999. (WRONG ANSWER. TRY AGAIN FROM SCENE 14.)
- * Option B: Code: 2021. (WRONG ANSWER. TRY AGAIN FROM SCENE 14.)
+ * Option A: Code: 1999. (WRONG ANSWER. TRY AGAIN FROM SCENE 14)
+ * Option B: Code: 2021. (WRONG ANSWER. TRY AGAIN FROM SCENE 14)
  * Option C: Code: 2028. (Go to SCENE 16)
 SCENE 16: THE AI CORE
 Description:
 The code works. Inside, massive, outdated mainframes fill a cavernous room. Elara begins working quickly at a terminal. "The weather is worse, and still too cold outside. The core needs a new algorithm."
- * Option A: Offer to help with the core's diagnostics. (Go to SCENE 17.)
+ * Option A: Offer to help with the core's diagnostics. (Go to SCENE 17)
  * Option B: She knows what to do. Watch her work from a distance. (Go to SCENE 18)
 SCENE 17: TECHNICAL BOND
 Description:
@@ -104,7 +104,7 @@ The Fusion Terminal is located in Sector 7—the same sector Elara maintains. Ov
 SCENE 21: THE OBSERVATION DECK
 Description:
 During your scarce downtime, you meet her on the Observation Deck. She talks about how she used to dream of the blue sky. You share your own memories of the world before the ice and grey clouds. You remember your private stuff in storage.
- * Option A: Share your secret stash of coffee. (Go to SCENE 22.)
+ * Option A: Share your secret stash of coffee. (Go to SCENE 22)
  * Option B: Ask her if she resents you. (Go to SCENE 23)
 SCENE 22: COFFEE AND COMPLICITY
 Description:
@@ -127,9 +127,9 @@ You meet hidden in maintenance tunnels and the shadows of the fusion core. Your 
 SCENE 26: MEMORY CHECK II
 Description:
 "STASIS PROTOCOL UNSTABLE" AI controlled robots force you to the terminal. The pods will die without a reset command based on your stasis rotation pattern.
- * Option A: 5 Years Awake / 1 Year Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)
+ * Option A: 5 Years Awake / 1 Year Asleep. (GO TO SCENE 25)
  * Option B: 1 Year Awake / 5 Years Asleep. (Go to SCENE 27)
- * Option C: 1 Year Awake / 10 Years Asleep. (WRONG ANSWER. TRY AGAIN FROM SCENE 25.)
+ * Option C: 1 Year Awake / 10 Years Asleep. (GO TO SCENE 25)
 SCENE 27: T-MINUS ONE MONTH
 Description:
 The code is correct. The other pods stabilizes. A notification flashes: FORCED STASIS INITIATING IN T-MINUS 720 HOURS. PREPARE FOR DEEP FREEZE.

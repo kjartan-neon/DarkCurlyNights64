@@ -584,10 +584,10 @@ static uint8_t find_scene_index(uint8_t scene_id)
  */
 static uint8_t resolve_target(const StoryOption* option, uint8_t flags)
 {
-    if (option->condition == STORY_COND_HAS_MULTITOOL && !(flags & STORY_FLAG_MULTITOOL) && option->alt_target_scene != 255) {
+    if (option->condition == STORY_COND_HAS_MULTITOOL && !(flags & STORY_COND_HAS_MULTITOOL) && option->alt_target_scene != 255) {
         return option->alt_target_scene;
     }
-    if (option->condition == STORY_COND_HAS_COFFEE && !(flags & STORY_FLAG_COFFEE) && option->alt_target_scene != 255) {
+    if (option->condition == STORY_COND_HAS_COFFEE && !(flags & STORY_COND_HAS_COFFEE) && option->alt_target_scene != 255) {
         return option->alt_target_scene;
     }
     return option->target_scene;
@@ -757,11 +757,6 @@ int main(void)
         /* Flag: has this scene's rendering been completed (title + desc + options + bitmap)?
          * Used to distinguish first-render (slow, loads bitmap) from re-renders (fast, same bitmap). */
         uint8_t scene_ready = 0;
-
-        /* Apply any permanent story flags this scene grants to the player
-         * (e.g., player collected an item, discovered a plot point).
-         * These persist even if the player visits other scenes later. */
-        flags |= scene->grants_flags;
 
         /* Scan the description text to find all page breaks.
          * This tells us how many pages of description exist for this scene.

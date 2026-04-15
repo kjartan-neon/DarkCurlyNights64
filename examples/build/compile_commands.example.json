@@ -1,0 +1,17 @@
+[
+    {
+        "directory": "/Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64",
+        "file": "/Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64/src/main.c",
+        "arguments": [
+            "/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/bin/mos-clang",
+            "-DDEBUG",
+            "-D__llvm__",
+            "-D__clang__",
+            "-I/Users/kjartan.bjorndal.michalsen/Documents/GitHub/DarkCurlyNights64",
+            "-I/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/mos-platform/common/include",
+            "-I/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/mos-platform/commodore/include",
+            "-I/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/mos-platform/c64/include",
+            "-I/Users/kjartan.bjorndal.michalsen/Documents/llvm-mos/lib/clang/16/include"
+        ]
+    }
+]

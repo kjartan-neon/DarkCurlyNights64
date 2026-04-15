@@ -137,16 +137,9 @@ Output:
 
 The disk build script consumes `gfx/bmp/SCENENN.BMP` and writes numeric scene files (`01`..`30`) to the disk image.
 
-## Emulator smoke test (headless log check)
+## GameBoy Port
 
-```zsh
-pkill -f x64sc || true
-rm -f /tmp/darkcurlynights64-vice-verbose.log
-(/Applications/vice-arm64-gtk3-3.10/bin/x64sc --verbose -autostart "build/DarkCurlyNights64.d64" > /tmp/darkcurlynights64-vice-verbose.log 2>&1 &) \
-	&& sleep 15 \
-	&& pkill -f x64sc || true
-grep -n "AUTOSTART:\|JAM\|BITMAP LOAD FAILED\|LOAD ERROR" /tmp/darkcurlynights64-vice-verbose.log | tail -80
-```
+Work in progress...
 
 ## VS Code notes
 
