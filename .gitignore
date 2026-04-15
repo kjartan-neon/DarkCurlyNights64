@@ -26,6 +26,7 @@ build/
 !/build/
 /build/*
 !/build/DarkCurlyNights64.d64
+!/build/gb
 develop-eggs/
 dist/
 downloads/
