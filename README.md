@@ -56,7 +56,8 @@ So anyone can clone/download and launch directly in VICE.
 
 - Runtime loads scenes as **per-scene files** from disk (`01`..`30`).
 - Disk build writes:
-	- program: `DARK64`
+	- disk label: `64`
+	- program: `dark64`
 	- scene files: `01`, `02`, ..., `30`
 - Scene filename format intentionally uses numbers only (no `S` prefix).
 - Main tested target is `d64`.
@@ -136,6 +137,31 @@ Output:
 - `build/DarkCurlyNights64.d64`
 
 The disk build script consumes `gfx/bmp/SCENENN.BMP` and writes numeric scene files (`01`..`30`) to the disk image.
+
+## C64 release automation
+
+If `project-config.json` is set to `"build": "release"`, running the disk build script also prepares a versioned C64 release bundle automatically.
+
+Release build flow:
+
+```zsh
+python3 -c 'import json, pathlib; p = pathlib.Path("project-config.json"); d = json.loads(p.read_text()); d["build"] = "release"; p.write_text(json.dumps(d, indent=4) + "\n")'
+ninja -C build
+./tools/build_disk_image.sh --type d64
+```
+
+That release flow will:
+
+- bump the minor version in `releases/c64/version.json`
+- copy the current C64 artifacts into `releases/c64/vX.Y.0/`
+- write release metadata to `releases/c64/vX.Y.0/release.json`
+- try to create a local git tag named `c64-vX.Y.0`
+
+By default, git tagging is skipped if the repository has uncommitted changes. You can control this with:
+
+- `C64_RELEASE_GIT_TAG_MODE=auto` (default)
+- `C64_RELEASE_GIT_TAG_MODE=never`
+- `C64_RELEASE_GIT_TAG_MODE=always`
 
 ## GameBoy Port
 
