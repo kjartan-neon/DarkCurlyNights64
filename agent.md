@@ -67,6 +67,12 @@ What `src/main.c` handles:
 Mac path used in this project:
 - `/Applications/vice-arm64-gtk3-3.10/bin/x64sc`
 
+Linux notes:
+- Typical VICE binaries are available on `PATH` after install:
+  - `x64sc`
+  - `c1541`
+- `tools/build_disk_image.sh` now auto-detects `c1541` from `PATH` on Linux.
+
 ## 3.2 GB side
 
 Required:
@@ -129,16 +135,36 @@ Output:
 
 ## 5.1 C64 in VICE
 
+macOS:
+
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
 ```
 
-## 5.2 C64 headless-ish smoke log
+Linux:
 
 ```zsh
+x64sc -autostart build/DarkCurlyNights64.d64
+```
+
+## 5.2 C64 headless-ish smoke log
+
+Cross-platform (Linux + macOS):
+
+```zsh
+VICE_X64SC="${VICE_X64SC:-$(command -v x64sc || true)}"
+if [[ -z "$VICE_X64SC" && -x "/Applications/vice-arm64-gtk3-3.10/bin/x64sc" ]]; then
+  VICE_X64SC="/Applications/vice-arm64-gtk3-3.10/bin/x64sc"
+fi
+
+if [[ -z "$VICE_X64SC" ]]; then
+  echo "x64sc not found. Install VICE or set VICE_X64SC=/path/to/x64sc" >&2
+  exit 1
+fi
+
 pkill -f x64sc || true
 rm -f /tmp/darkcurlynights64-vice-verbose.log
-(/Applications/vice-arm64-gtk3-3.10/bin/x64sc --verbose -autostart "build/DarkCurlyNights64.d64" > /tmp/darkcurlynights64-vice-verbose.log 2>&1 &) \
+("$VICE_X64SC" --verbose -autostart "build/DarkCurlyNights64.d64" > /tmp/darkcurlynights64-vice-verbose.log 2>&1 &) \
   && sleep 15 \
   && pkill -f x64sc || true
 grep -n "AUTOSTART:\|JAM\|BITMAP LOAD FAILED\|LOAD ERROR" /tmp/darkcurlynights64-vice-verbose.log | tail -80

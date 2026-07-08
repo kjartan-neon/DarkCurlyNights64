@@ -70,3 +70,5 @@ tags
 *.bak
 *.snap
 DarkCurlyNights64.code-workspace
+build/build.ninja
+build/build.ninja

@@ -10,7 +10,15 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build"
-C1541_BIN="${C1541_BIN:-/Applications/vice-arm64-gtk3-3.10/bin/c1541}"
+
+DEFAULT_MAC_C1541="/Applications/vice-arm64-gtk3-3.10/bin/c1541"
+if [[ -n "${C1541_BIN:-}" ]]; then
+  C1541_BIN="${C1541_BIN}"
+elif command -v c1541 >/dev/null 2>&1; then
+  C1541_BIN="$(command -v c1541)"
+else
+  C1541_BIN="${DEFAULT_MAC_C1541}"
+fi
 
 IMAGE_TYPE="d64"
 IMAGE_PATH=""
@@ -89,7 +97,16 @@ done
 # ceil(n / 254)
 ceil_blocks() { echo $(( ($1 + 253) / 254 )); }
 
-prg_bytes=$(stat -f "%z" "$PRG_PATH")
+stat_bytes() {
+  local file_path="$1"
+  if stat -f "%z" "$file_path" >/dev/null 2>&1; then
+    stat -f "%z" "$file_path"
+  else
+    stat -c "%s" "$file_path"
+  fi
+}
+
+prg_bytes=$(stat_bytes "$PRG_PATH")
 prg_blocks=$(ceil_blocks "$prg_bytes")
 
 if [[ "$IMAGE_TYPE" == "d64" ]]; then
@@ -103,7 +120,7 @@ scene_total_bytes=0
 scene_total_blocks=0
 
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
-  scene_bytes=$(stat -f "%z" "$scene_file")
+  scene_bytes=$(stat_bytes "$scene_file")
   scene_blocks=$(ceil_blocks "$scene_bytes")
   scene_total_bytes=$(( scene_total_bytes + scene_bytes ))
   scene_total_blocks=$(( scene_total_blocks + scene_blocks ))
@@ -136,7 +153,7 @@ printf "  %-8s  %d bytes\n" "DARK64" "$prg_bytes"
 # ── Write scene files (01..NN) ────────────────────────────────────────────────
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
   scene_name="${scene_file:t}"
-  scene_bytes=$(stat -f "%z" "$scene_file")
+  scene_bytes=$(stat_bytes "$scene_file")
   "$C1541_BIN" "$IMAGE_PATH" -write "$scene_file" "$scene_name" >/dev/null
   printf "  %-8s  %d bytes\n" "$scene_name" "$scene_bytes"
 done
