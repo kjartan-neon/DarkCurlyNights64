@@ -1,0 +1,22 @@
+{
+  "platform": "c64",
+  "version": "0.1.0",
+  "tag": "c64-v0.1.0",
+  "git_head": "d88c5329f017cc35527140f7f28031c9d5d4faad",
+  "created_at": "2026-04-27T11:53:59.052204+00:00",
+  "artifacts": [
+    {
+      "path": "releases/c64/v0.1.0/DarkCurlyNights64-c64-v0.1.0.d64",
+      "bytes": 174848
+    },
+    {
+      "path": "releases/c64/v0.1.0/DarkCurlyNights64-c64-v0.1.0.prg",
+      "bytes": 30627
+    }
+  ],
+  "git_tag": {
+    "mode": "auto",
+    "status": "skipped",
+    "message": "Skipped git tag creation: repository has uncommitted changes."
+  }
+}

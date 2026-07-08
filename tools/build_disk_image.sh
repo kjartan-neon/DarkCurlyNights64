@@ -10,19 +10,16 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build"
-
-DEFAULT_MAC_C1541="/Applications/vice-arm64-gtk3-3.10/bin/c1541"
-if [[ -n "${C1541_BIN:-}" ]]; then
-  C1541_BIN="${C1541_BIN}"
-elif command -v c1541 >/dev/null 2>&1; then
-  C1541_BIN="$(command -v c1541)"
-else
-  C1541_BIN="${DEFAULT_MAC_C1541}"
-fi
+C1541_BIN="${C1541_BIN:-/Applications/vice-arm64-gtk3-3.10/bin/c1541}"
 
 IMAGE_TYPE="d64"
 IMAGE_PATH=""
 PRG_PATH="${BUILD_DIR}/DarkCurlyNights64.prg"
+DISK_NAME_RAW="${DISK_NAME:-64}"
+DISK_ID_RAW="${DISK_ID:-64}"
+PRG_NAME_RAW="${PRG_NAME:-dark64}"
+RELEASE_AUTOMATION="${C64_RELEASE_AUTOMATION:-1}"
+RELEASE_TAG_MODE="${C64_RELEASE_GIT_TAG_MODE:-auto}"
 
 # Free blocks after format (as reported by c1541/BASIC)
 D64_CAPACITY=664
@@ -62,6 +59,17 @@ if [[ ! -f "$PRG_PATH" ]]; then
   echo "PRG not found: ${PRG_PATH}  (run: ninja -C build)" >&2; exit 1
 fi
 
+build_mode="$(python3 - "$REPO_ROOT/project-config.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+config_path = Path(sys.argv[1])
+data = json.loads(config_path.read_text())
+print(data.get("build", "debug"))
+PY
+)"
+
 # ── Collect source scene files ────────────────────────────────────────────────
 all_scenes=("${REPO_ROOT}"/gfx/bmp/SCENE??.BMP(N))
 total_scenes=${#all_scenes[@]}
@@ -97,16 +105,41 @@ done
 # ceil(n / 254)
 ceil_blocks() { echo $(( ($1 + 253) / 254 )); }
 
-stat_bytes() {
-  local file_path="$1"
-  if stat -f "%z" "$file_path" >/dev/null 2>&1; then
-    stat -f "%z" "$file_path"
-  else
-    stat -c "%s" "$file_path"
-  fi
+sanitize_c64_label() {
+  local raw="$1"
+  local max_len="$2"
+  local fallback="$3"
+  local label
+
+  label="$(printf "%s" "$raw" | tr '[:lower:]' '[:upper:]' | LC_ALL=C tr -c 'A-Z0-9 -' ' ' | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+  [[ -z "$label" ]] && label="$fallback"
+
+  printf "%s" "${label[1,$max_len]}"
 }
 
-prg_bytes=$(stat_bytes "$PRG_PATH")
+sanitize_c64_filename() {
+  local raw="$1"
+  local max_len="$2"
+  local fallback="$3"
+  local label
+
+  label="$(printf "%s" "$raw" | LC_ALL=C tr -c 'A-Za-z0-9 -' ' ' | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+  [[ -z "$label" ]] && label="$fallback"
+
+  printf "%s" "${label[1,$max_len]}"
+}
+
+sanitize_c64_id() {
+  local raw="$1"
+  local id
+
+  id="$(printf "%s" "$raw" | tr '[:lower:]' '[:upper:]' | LC_ALL=C tr -cd 'A-Z0-9')"
+  [[ -z "$id" ]] && id="64"
+
+  printf "%s" "${id[1,2]}"
+}
+
+prg_bytes=$(stat -f "%z" "$PRG_PATH")
 prg_blocks=$(ceil_blocks "$prg_bytes")
 
 if [[ "$IMAGE_TYPE" == "d64" ]]; then
@@ -120,7 +153,7 @@ scene_total_bytes=0
 scene_total_blocks=0
 
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
-  scene_bytes=$(stat_bytes "$scene_file")
+  scene_bytes=$(stat -f "%z" "$scene_file")
   scene_blocks=$(ceil_blocks "$scene_bytes")
   scene_total_bytes=$(( scene_total_bytes + scene_bytes ))
   scene_total_blocks=$(( scene_total_blocks + scene_blocks ))
@@ -132,6 +165,10 @@ if (( scene_total_blocks > remaining )); then
 fi
 
 image_type_upper=$(echo "$IMAGE_TYPE" | tr '[:lower:]' '[:upper:]')
+disk_name=$(sanitize_c64_label "$DISK_NAME_RAW" 16 "64")
+disk_id=$(sanitize_c64_id "$DISK_ID_RAW")
+prg_name=$(sanitize_c64_filename "$PRG_NAME_RAW" 16 "dark64")
+
 echo "Disk layout (${image_type_upper}):"
 printf "  Capacity  : %d blocks\n" "$capacity"
 printf "  PRG       : %d blocks (%d bytes)\n" "$prg_blocks" "$prg_bytes"
@@ -143,20 +180,31 @@ printf "  Used      : %d / %d blocks\n" "$(( prg_blocks + scene_total_blocks ))"
 mkdir -p "$(dirname "$IMAGE_PATH")"
 rm -f "$IMAGE_PATH"
 
-"$C1541_BIN" -format "dark64,64" "${IMAGE_TYPE}" "$IMAGE_PATH" >/dev/null
+# Use normalized labels to avoid odd-looking directory names in PETSCII listings.
+"$C1541_BIN" -format "${disk_name},${disk_id}" "${IMAGE_TYPE}" "$IMAGE_PATH" >/dev/null
 
 # Main game executable
-"$C1541_BIN" "$IMAGE_PATH" -write "$PRG_PATH" DARK64 >/dev/null
+"$C1541_BIN" "$IMAGE_PATH" -write "$PRG_PATH" "$prg_name" >/dev/null
 echo ""
-printf "  %-8s  %d bytes\n" "DARK64" "$prg_bytes"
+printf "  %-8s  %d bytes\n" "$prg_name" "$prg_bytes"
 
 # ── Write scene files (01..NN) ────────────────────────────────────────────────
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
   scene_name="${scene_file:t}"
-  scene_bytes=$(stat_bytes "$scene_file")
+  scene_bytes=$(stat -f "%z" "$scene_file")
   "$C1541_BIN" "$IMAGE_PATH" -write "$scene_file" "$scene_name" >/dev/null
   printf "  %-8s  %d bytes\n" "$scene_name" "$scene_bytes"
 done
 
 echo ""
 echo "Built: ${IMAGE_PATH}  (${total_scenes} scenes as raw top-half files)"
+
+if [[ "$build_mode" == "release" && "$RELEASE_AUTOMATION" != "0" ]]; then
+  echo ""
+  echo "Preparing C64 release bundle..."
+  python3 "${SCRIPT_DIR}/release_c64.py" \
+    --repo-root "$REPO_ROOT" \
+    --disk-image "$IMAGE_PATH" \
+    --prg "$PRG_PATH" \
+    --git-tag-mode "$RELEASE_TAG_MODE"
+fi
