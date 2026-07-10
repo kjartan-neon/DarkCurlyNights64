@@ -79,9 +79,27 @@ Required:
 - **GBDK-2020** installed under path expected by `Makefile_gb`:
   - `/usr/local/local/lib/gbdk`
 - Python venv for asset script (used by `make -f Makefile_gb assets`)
+- Python package `Pillow` in `.venv` (required by `tools/generate_gb_asset.py`)
 
 If GBDK is in a different location, update `Makefile_gb`:
 - `GBDK := <your-path>`
+
+Linux quick verification:
+
+```zsh
+ls -l /usr/local/local/lib/gbdk/bin/lcc /usr/local/local/lib/gbdk/include/gb/gb.h
+make -f Makefile_gb assets
+make -f Makefile_gb
+```
+
+If asset generation fails with `ModuleNotFoundError: No module named 'PIL'`:
+
+```zsh
+.venv/bin/pip install Pillow
+```
+
+If GBDK is not installed in the expected path:
+- install GBDK-2020 and set the `GBDK` variable in `Makefile_gb` to the actual install directory.
 
 ---
 
@@ -144,8 +162,13 @@ macOS:
 Linux:
 
 ```zsh
-x64sc -autostart build/DarkCurlyNights64.d64
+x64sc +drive8truedrive -virtualdev8 -autostart build/DarkCurlyNights64.d64
 ```
+
+Why on Linux:
+- Some VICE installs do not include 1541 DOS ROMs.
+- `+drive8truedrive` avoids hardware 1541 emulation.
+- `-virtualdev8` keeps autostart/file loading working through virtual device traps.
 
 ## 5.2 C64 headless-ish smoke log
 

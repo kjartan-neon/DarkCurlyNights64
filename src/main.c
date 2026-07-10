@@ -57,6 +57,9 @@
 static volatile uint8_t debug_stage = 0;
 static uint8_t loaded_bitmap_scene_id = 0xFFu;
 
+/* Set to 1 when diagnosing scene file loads; keep 0 for normal runtime. */
+#define DISK_DEBUG 0
+
 /* Forward declaration for debug logging helper used before write_text definition. */
 static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color);
 static void clear_line(uint8_t row, uint8_t color);
@@ -309,6 +312,63 @@ static void write_text(uint8_t row, uint8_t col, const char* text, uint8_t color
     }
 }
 
+#if DISK_DEBUG
+/*
+ * Purpose: Convert one byte to two ASCII hex digits.
+ * Inputs: value byte and output buffer of size 3.
+ * Returns: nothing.
+ */
+static void byte_to_hex(uint8_t value, char out[3])
+{
+    static const char hex[] = "0123456789ABCDEF";
+    out[0] = hex[(value >> 4) & 0x0Fu];
+    out[1] = hex[value & 0x0Fu];
+    out[2] = '\0';
+}
+
+/*
+ * Purpose: Draw live disk-load debug info on screen.
+ * Inputs: scene id, IEC device number, filename bytes, KERNAL status.
+ * Returns: nothing.
+ */
+static void draw_disk_debug_status(uint8_t scene_id, uint8_t device, const char filename[3], uint8_t status)
+{
+    char line1[] = "LOAD 00 DEV00 ST00";
+    char line2[] = "FNHEX 00 00";
+    char hexbuf[3];
+
+    line1[5] = filename[0];
+    line1[6] = filename[1];
+
+    byte_to_hex(device, hexbuf);
+    line1[11] = hexbuf[0];
+    line1[12] = hexbuf[1];
+
+    byte_to_hex(status, hexbuf);
+    line1[16] = hexbuf[0];
+    line1[17] = hexbuf[1];
+
+    byte_to_hex((uint8_t)filename[0], hexbuf);
+    line2[6] = hexbuf[0];
+    line2[7] = hexbuf[1];
+
+    byte_to_hex((uint8_t)filename[1], hexbuf);
+    line2[9] = hexbuf[0];
+    line2[10] = hexbuf[1];
+
+    write_text(11, 0, line1, COLOR_CYAN);
+    write_text(12, 0, line2, COLOR_LIGHTBLUE);
+
+    if ((status & 0x3Fu) == 0) {
+        write_text(11, 22, "OK", COLOR_LIGHTGREEN);
+    } else {
+        write_text(11, 22, "FAIL", COLOR_LIGHTRED);
+    }
+
+    (void)scene_id;
+}
+#endif
+
 /*
  * Purpose: Word-wrap and optionally draw one page inside custom row bounds.
  * Inputs: text buffer, start index, draw flag, row start/count, more-marker flag.
@@ -514,9 +574,16 @@ static uint8_t load_scene_file_for_device(uint8_t scene_id, uint8_t device)
     status = cbm_k_readst();
     cbm_k_clall();
 
+#if DISK_DEBUG
+    draw_disk_debug_status(scene_id, device, filename, status);
+#endif
+
     if ((status & 0x3Fu) != 0) {
         return 0;
     }
+
+    /* KERNAL LOAD may disturb VIC display registers; restore bitmap mode. */
+    configure_bitmap_mode();
 
     memset(&BITMAP_RAM[BITMAP_TOP_HALF_BYTES], 0x00, BITMAP_TOP_HALF_BYTES);
     return 1;

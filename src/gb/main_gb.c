@@ -56,6 +56,8 @@
 #include "scene29_bitmap_gb.h"
 #include "scene30_bitmap_gb.h"
 
+#include "maze_gb.h"
+
 /* --------------------------------------------------------------------------
  * Screen layout constants
  * --------------------------------------------------------------------------
@@ -147,10 +149,10 @@ static void        load_scene(uint8_t scene_id);
 static void        draw_scene_bitmap(uint8_t scene_id);
 static const char* draw_text_page(uint8_t start_row, uint8_t end_row, const char* text);
 static void        draw_options(const StoryScene* scene);
-static void        clear_rows(uint8_t from_row, uint8_t to_row);
-static void        wait_for_release(uint8_t keys);
+void               clear_rows(uint8_t from_row, uint8_t to_row);
+void               wait_for_release(uint8_t keys);
 static void        get_scene_bitmap(uint8_t scene_id, const uint8_t** data, uint8_t* bank);
-static void        wait_for_page_advance_arrow(void);
+void               wait_for_page_advance_arrow(void);
 static void        show_scene_story_pages(const StoryScene* scene);
 static const StoryScene* find_scene_by_id(uint8_t scene_id);
 static uint8_t     build_menu_items(const StoryScene* scene, uint8_t* menu_items, uint8_t max_items);
@@ -161,9 +163,9 @@ static void        update_menu_cursor(uint8_t previous_cursor, uint8_t new_curso
 static const char* menu_item_text(uint8_t menu_item);
 static char        peek_display_char(const char* text, uint8_t* advance);
 static char        next_display_char(const char** text);
-static uint8_t     ui_tile_for_char(char ch);
+uint8_t            ui_tile_for_char(char ch);
 static void        load_ui_font_tiles(void);
-static uint8_t     draw_wrapped_lines(uint8_t x, uint8_t start_row, uint8_t end_row, uint8_t width, const char* text);
+uint8_t            draw_wrapped_lines(uint8_t x, uint8_t start_row, uint8_t end_row, uint8_t width, const char* text);
 static void        initialize_palettes(void);
 
 /* --------------------------------------------------------------------------
@@ -210,7 +212,7 @@ static void get_scene_bitmap(uint8_t scene_id, const uint8_t** data, uint8_t* ba
 /* --------------------------------------------------------------------------
  * Wait until all specified keys are released (debounce helper).
  * -------------------------------------------------------------------------- */
-static void wait_for_release(uint8_t keys) {
+void wait_for_release(uint8_t keys) {
     while (joypad() & keys) {
         wait_vbl_done();
     }
@@ -273,7 +275,7 @@ static char next_display_char(const char** text) {
  * Resolve a display character to a loaded UI font tile index.
  * Falls back to '?' when character is not present in the curated set.
  * -------------------------------------------------------------------------- */
-static uint8_t ui_tile_for_char(char ch) {
+uint8_t ui_tile_for_char(char ch) {
     for (uint8_t idx = 0; idx < UI_FONT_TILE_COUNT; idx++) {
         if (UI_FONT_CHARS[idx] == ch) {
             return (uint8_t)(TILE_BASE_FONT + idx);
@@ -324,7 +326,7 @@ static void draw_char_xy(uint8_t x, uint8_t y, char ch) {
  * Draw a single line of text without allowing console wrapping.
  * Characters beyond the right edge are clipped.
  * -------------------------------------------------------------------------- */
-static void draw_text_line(uint8_t x, uint8_t y, const char* text) {
+void draw_text_line(uint8_t x, uint8_t y, const char* text) {
     while (*text != '\0' && x < SCREEN_TILES_X) {
         draw_char_xy(x, y, next_display_char(&text));
         x++;
@@ -343,7 +345,7 @@ static void clear_row(uint8_t y) {
 /* --------------------------------------------------------------------------
  * Clear a range of tile rows by filling them with the blank tile index.
  * -------------------------------------------------------------------------- */
-static void clear_rows(uint8_t from_row, uint8_t to_row) {
+void clear_rows(uint8_t from_row, uint8_t to_row) {
     for (uint8_t y = from_row; y <= to_row; y++) {
         clear_row(y);
     }
@@ -486,7 +488,7 @@ static const char* draw_text_page(uint8_t start_row, uint8_t end_row, const char
  * Blinking arrow prompt for paged story text.
  * A / B / START advances to the next page.
  * -------------------------------------------------------------------------- */
-static void wait_for_page_advance_arrow(void) {
+void wait_for_page_advance_arrow(void) {
     uint32_t frame_count = 0;
     uint8_t arrow_visible = 1;
     const uint8_t arrow_x = SCREEN_TILES_X - 1;
@@ -612,7 +614,7 @@ static const char* menu_item_text(uint8_t menu_item) {
 /* --------------------------------------------------------------------------
  * Draw wrapped text block; returns number of lines consumed.
  * -------------------------------------------------------------------------- */
-static uint8_t draw_wrapped_lines(uint8_t x, uint8_t start_row, uint8_t end_row, uint8_t width, const char* text) {
+uint8_t draw_wrapped_lines(uint8_t x, uint8_t start_row, uint8_t end_row, uint8_t width, const char* text) {
     uint8_t row = start_row;
     uint8_t col = 0;
     uint8_t lines = 1;
@@ -846,6 +848,7 @@ void main(void) {
     /* Start at scene 1 */
     g_current_scene = 1;
     g_flags = 0;
+    maze_reset_progress();
     load_scene(g_current_scene);
 
     /* ===================================================================
@@ -936,6 +939,14 @@ void main(void) {
                         /* Scene 255 = no target (dead end / game over) */
                         if (next_scene != 255) {
                             wait_for_release(J_A | J_START);
+
+                            /* Play a puzzle first if this scene requires one */
+                            const MazeLevel* maze_level;
+                            const char* maze_headline;
+                            if (scene_requires_maze(next_scene, &maze_level, &maze_headline)) {
+                                run_maze_puzzle(maze_level, maze_headline);
+                            }
+
                             g_current_scene = next_scene;
                             load_scene(g_current_scene);
                         }

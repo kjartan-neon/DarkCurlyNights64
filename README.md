@@ -28,7 +28,7 @@ The story builds toward a countdown to stasis and a final choice between duty, r
 
 C64 interactive story prototype built with VS64 + llvm-mos.
 
-This repository includes a ready-to-run disk image at:
+This repository includes a ready-to-run disk image in relases, or the latest build at:
 
 - `build/DarkCurlyNights64.d64`
 
@@ -42,6 +42,12 @@ So anyone can clone/download and launch directly in VICE.
 
 ```zsh
 /Applications/vice-arm64-gtk3-3.10/bin/x64sc -autostart build/DarkCurlyNights64.d64
+```
+
+	On Linux (disable True Drive Emulation and force virtual device mode):
+
+```zsh
+x64sc +drive8truedrive -virtualdev8 -autostart build/DarkCurlyNights64.d64
 ```
 
 ## Controls

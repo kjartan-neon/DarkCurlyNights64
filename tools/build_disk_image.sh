@@ -10,7 +10,23 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${REPO_ROOT}/build"
-C1541_BIN="${C1541_BIN:-/Applications/vice-arm64-gtk3-3.10/bin/c1541}"
+
+# OS detection: set OS_TYPE to "linux" or "mac" (override via env: OS_TYPE=linux)
+if [[ -z "${OS_TYPE:-}" ]]; then
+  case "$(uname -s)" in
+    Darwin) OS_TYPE="mac" ;;
+    *)      OS_TYPE="linux" ;;
+  esac
+fi
+
+# Default c1541 path per OS (override via env: C1541_BIN=/path/to/c1541)
+if [[ -z "${C1541_BIN:-}" ]]; then
+  if [[ "$OS_TYPE" == "mac" ]]; then
+    C1541_BIN="/Applications/vice-arm64-gtk3-3.10/bin/c1541"
+  else
+    C1541_BIN="/usr/bin/c1541"
+  fi
+fi
 
 IMAGE_TYPE="d64"
 IMAGE_PATH=""
@@ -139,7 +155,11 @@ sanitize_c64_id() {
   printf "%s" "${id[1,2]}"
 }
 
-prg_bytes=$(stat -f "%z" "$PRG_PATH")
+if [[ "$OS_TYPE" == "mac" ]]; then
+  prg_bytes=$(stat -f "%z" "$PRG_PATH")
+else
+  prg_bytes=$(stat -c "%s" "$PRG_PATH")
+fi
 prg_blocks=$(ceil_blocks "$prg_bytes")
 
 if [[ "$IMAGE_TYPE" == "d64" ]]; then
@@ -153,7 +173,11 @@ scene_total_bytes=0
 scene_total_blocks=0
 
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
-  scene_bytes=$(stat -f "%z" "$scene_file")
+  if [[ "$OS_TYPE" == "mac" ]]; then
+    scene_bytes=$(stat -f "%z" "$scene_file")
+  else
+    scene_bytes=$(stat -c "%s" "$scene_file")
+  fi
   scene_blocks=$(ceil_blocks "$scene_bytes")
   scene_total_bytes=$(( scene_total_bytes + scene_bytes ))
   scene_total_blocks=$(( scene_total_blocks + scene_blocks ))
@@ -191,7 +215,11 @@ printf "  %-8s  %d bytes\n" "$prg_name" "$prg_bytes"
 # ── Write scene files (01..NN) ────────────────────────────────────────────────
 for scene_file in "${TMPDIR_SCENES}"/[0-9][0-9](N); do
   scene_name="${scene_file:t}"
-  scene_bytes=$(stat -f "%z" "$scene_file")
+  if [[ "$OS_TYPE" == "mac" ]]; then
+    scene_bytes=$(stat -f "%z" "$scene_file")
+  else
+    scene_bytes=$(stat -c "%s" "$scene_file")
+  fi
   "$C1541_BIN" "$IMAGE_PATH" -write "$scene_file" "$scene_name" >/dev/null
   printf "  %-8s  %d bytes\n" "$scene_name" "$scene_bytes"
 done
