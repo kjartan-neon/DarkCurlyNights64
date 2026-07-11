@@ -15,6 +15,8 @@ The project is a way for me to learn more about the computer that started it all
 
 The story is written a while ago, but the current state of the world made me finish it. It is simplified to fit on one disk, but the essence is still there. It was written during some sleepless nights, but Elara represents a hope for the future. I hope you enjoy it, and come back for part 2.
 
+I started with https://cc65.github.io/ during Covid, but after llvm-mos was released I really got things working and switched to https://www.c64-wiki.com/wiki/llvm-mos and made that the basis for the C64. For the upcoming gameboy port, a 1:1 port was not possible. But story and images are converted into header files for both platforms. 
+
 ![Elara sketch](elara-sketch.jpg)
 
 ## Story Summary

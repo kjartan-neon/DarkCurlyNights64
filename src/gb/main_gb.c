@@ -143,7 +143,7 @@ extern const uint8_t font_ibm_fixed_tiles[];
 /* --------------------------------------------------------------------------
  * Forward declarations
  * -------------------------------------------------------------------------- */
-static void        show_intro_screen(void);
+static uint8_t     show_intro_screen(void);
 static void        show_part1_end_screen(void);
 static void        load_scene(uint8_t scene_id);
 static void        draw_scene_bitmap(uint8_t scene_id);
@@ -778,8 +778,9 @@ static void load_scene(uint8_t scene_id) {
  *
  * Fills the screen with the intro bitmap and displays the game title.
  * Waits for the player to press A or START before returning.
+ * Returns 1 if B was pressed (debug: skip to maze), 0 otherwise.
  * -------------------------------------------------------------------------- */
-static void show_intro_screen(void) {
+static uint8_t show_intro_screen(void) {
     uint8_t previous_bank = CURRENT_BANK;
 
     /* Upload top 9 rows worth of intro tiles (180 tiles) */
@@ -807,9 +808,11 @@ static void show_intro_screen(void) {
     /* Blinking "Press a to start" at row 13 */
     uint32_t frame_count = 0;
     uint8_t blink_state = 1;
-    
-    wait_for_release(J_A | J_START);
-    while (!(joypad() & (J_A | J_START))) {
+
+    draw_text_line(4, 15, "B: debug maze");
+
+    wait_for_release(J_A | J_START | J_B);
+    while (!(joypad() & (J_A | J_START | J_B))) {
         frame_count++;
         if (frame_count % 30 == 0) {  /* Toggle every 30 frames (~0.5s at 60fps) */
             blink_state = !blink_state;
@@ -821,7 +824,9 @@ static void show_intro_screen(void) {
         }
         wait_vbl_done();
     }
-    wait_for_release(J_A | J_START);
+    uint8_t debug = (joypad() & J_B) ? 1 : 0;
+    wait_for_release(J_A | J_START | J_B);
+    return debug;
 }
 
 /* --------------------------------------------------------------------------
@@ -843,12 +848,21 @@ void main(void) {
     DISPLAY_ON;
 
     /* Show intro screen and wait for player input */
-    show_intro_screen();
+    uint8_t debug_maze = show_intro_screen();
 
     /* Start at scene 1 */
     g_current_scene = 1;
     g_flags = 0;
     maze_reset_progress();
+
+    if (debug_maze) {
+        /* Debug shortcut: run the maze immediately then drop into scene 7 */
+        const MazeLevel* dbg_level;
+        const char* dbg_headline;
+        scene_requires_maze(7, &dbg_level, &dbg_headline);
+        run_maze_puzzle(dbg_level, dbg_headline);
+    }
+
     load_scene(g_current_scene);
 
     /* ===================================================================
